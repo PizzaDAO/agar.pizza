@@ -36,7 +36,8 @@ export const EJECT_SPEED = 600; // Speed of ejected mass
 
 // Virus (pizza cutter) settings
 export const VIRUS_COUNT = 30; // Number of viruses on map
-export const VIRUS_RADIUS = 50; // Size of virus
+export const VIRUS_RADIUS = 60; // Size of virus (20% larger)
+export const VIRUS_MASS = 100; // Mass gained when eating a virus
 export const VIRUS_SPLIT_MASS = 150; // Minimum mass to be split by virus
 export const VIRUS_SPLIT_COUNT = 8; // Number of pieces when split by virus
 

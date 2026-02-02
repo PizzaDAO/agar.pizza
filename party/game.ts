@@ -27,6 +27,7 @@ import {
   EJECT_SPEED,
   VIRUS_COUNT,
   VIRUS_RADIUS,
+  VIRUS_MASS,
   VIRUS_SPLIT_MASS,
   VIRUS_SPLIT_COUNT,
   MERGE_TIME
@@ -433,7 +434,9 @@ export default class GameServer implements Party.Server {
           const numPieces = Math.min(VIRUS_SPLIT_COUNT, MAX_CELLS - player.cells.length + 1);
           if (numPieces <= 1) continue;
 
-          const piecesMass = cell.mass / numPieces;
+          // Add virus mass to the cell before splitting (like eating the virus)
+          const totalMass = cell.mass + VIRUS_MASS;
+          const piecesMass = totalMass / numPieces;
           const pieceRadius = massToRadius(piecesMass);
 
           // Mark original cell for removal
