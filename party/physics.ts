@@ -18,9 +18,9 @@ export function massToRadius(mass: number): number {
 }
 
 // Calculate speed based on mass (agar.io: speed ∝ mass^-0.439)
-// Base speed ~150 at mass 10, scales down with mass
+// Base speed ~300 at mass 10, scales down with mass
 export function calculateSpeed(mass: number): number {
-  return 150 * Math.pow(mass, -0.439) * Math.pow(10, 0.439);
+  return 300 * Math.pow(mass, -0.439) * Math.pow(10, 0.439);
 }
 
 // Calculate merge time based on mass (agar.io: 30s + 2.33% of mass)
