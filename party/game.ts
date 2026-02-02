@@ -28,7 +28,6 @@ import {
   VIRUS_COUNT,
   VIRUS_RADIUS,
   VIRUS_MASS,
-  VIRUS_SPLIT_MASS,
   VIRUS_SPLIT_COUNT,
   MERGE_TIME
 } from './constants';
@@ -425,8 +424,8 @@ export default class GameServer implements Party.Server {
     for (let i = 0; i < player.cells.length; i++) {
       const cell = player.cells[i];
 
-      // Only large cells get split by viruses
-      if (cell.mass < VIRUS_SPLIT_MASS) continue;
+      // Only cells bigger than the virus get split - smaller cells pass through
+      if (cell.mass <= VIRUS_MASS) continue;
 
       for (const virus of this.state.viruses.values()) {
         if (checkVirusCollision(cell, virus)) {
