@@ -63,8 +63,10 @@ export function movePlayer(player: Player, deltaTime: number): void {
   pushApartCells(player);
 }
 
-// Push apart cells of the same player that overlap
+// Handle cell interactions - push apart if can't merge, attract if can merge
 function pushApartCells(player: Player): void {
+  const now = Date.now();
+
   for (let i = 0; i < player.cells.length; i++) {
     for (let j = i + 1; j < player.cells.length; j++) {
       const a = player.cells[i];
@@ -75,16 +77,33 @@ function pushApartCells(player: Player): void {
       const dist = Math.sqrt(dx * dx + dy * dy);
       const minDist = a.radius + b.radius;
 
-      if (dist < minDist && dist > 0) {
-        // Push apart
-        const overlap = minDist - dist;
-        const pushX = (dx / dist) * overlap * 0.5;
-        const pushY = (dy / dist) * overlap * 0.5;
+      // Check if both cells can merge
+      const canMerge = now >= a.mergeTime && now >= b.mergeTime;
 
-        a.x -= pushX;
-        a.y -= pushY;
-        b.x += pushX;
-        b.y += pushY;
+      if (canMerge) {
+        // Attract cells toward each other when they can merge
+        if (dist > 0 && dist < minDist * 1.5) {
+          const attractForce = 0.03;
+          const attractX = (dx / dist) * attractForce * minDist;
+          const attractY = (dy / dist) * attractForce * minDist;
+
+          a.x += attractX;
+          a.y += attractY;
+          b.x -= attractX;
+          b.y -= attractY;
+        }
+      } else {
+        // Push apart cells that can't merge yet
+        if (dist < minDist && dist > 0) {
+          const overlap = minDist - dist;
+          const pushX = (dx / dist) * overlap * 0.5;
+          const pushY = (dy / dist) * overlap * 0.5;
+
+          a.x -= pushX;
+          a.y -= pushY;
+          b.x += pushX;
+          b.y += pushY;
+        }
       }
     }
   }
@@ -112,16 +131,24 @@ export function mergeCells(player: Player): void {
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
+      const combinedRadius = a.radius + b.radius;
 
-      // Merge if overlapping significantly
-      if (dist < Math.max(a.radius, b.radius) * 0.8) {
-        // Merge into larger cell
+      // Merge when cells are touching (like agar.io)
+      if (dist < combinedRadius * 0.9) {
+        // Merge into larger cell, position weighted by mass
         if (a.mass >= b.mass) {
-          a.mass += b.mass;
+          const totalMass = a.mass + b.mass;
+          // Move toward the center weighted by mass
+          a.x = (a.x * a.mass + b.x * b.mass) / totalMass;
+          a.y = (a.y * a.mass + b.y * b.mass) / totalMass;
+          a.mass = totalMass;
           a.radius = massToRadius(a.mass);
           toRemove.push(j);
         } else {
-          b.mass += a.mass;
+          const totalMass = a.mass + b.mass;
+          b.x = (a.x * a.mass + b.x * b.mass) / totalMass;
+          b.y = (a.y * a.mass + b.y * b.mass) / totalMass;
+          b.mass = totalMass;
           b.radius = massToRadius(b.mass);
           toRemove.push(i);
           break; // Cell i is gone, move on
