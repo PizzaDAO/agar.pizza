@@ -196,21 +196,25 @@ test.describe('Agar Pizza Game', () => {
   test('pizza cutter collision mechanics exist', async ({ page }) => {
     await joinGame(page, 'MechanicsTest');
 
-    // Verify the game has the expected configuration
+    // Verify the game has the expected configuration (agar.io-like parameters)
     const gameConfig = await page.evaluate(() => {
       // These are the expected constants from the game
       return {
-        virusRadius: 60,      // VIRUS_RADIUS
-        virusCount: 30,       // VIRUS_COUNT
-        splitCount: 8,        // VIRUS_SPLIT_COUNT - pieces when sliced
-        maxCells: 16,         // MAX_CELLS
+        virusRadius: 60,           // VIRUS_RADIUS
+        virusCount: 30,            // VIRUS_COUNT
+        minSplitPieces: 8,         // VIRUS_MIN_SPLIT_PIECES
+        maxSplitPieces: 16,        // VIRUS_MAX_SPLIT_PIECES
+        maxCells: 16,              // MAX_CELLS
+        eatRatio: 1.25,            // EAT_RATIO (25% larger to eat)
       };
     });
 
     // Verify game constants are as expected
     expect(gameConfig.virusRadius).toBe(60);
     expect(gameConfig.virusCount).toBe(30);
-    expect(gameConfig.splitCount).toBe(8);
+    expect(gameConfig.minSplitPieces).toBe(8);
+    expect(gameConfig.maxSplitPieces).toBe(16);
     expect(gameConfig.maxCells).toBe(16);
+    expect(gameConfig.eatRatio).toBe(1.25);
   });
 });

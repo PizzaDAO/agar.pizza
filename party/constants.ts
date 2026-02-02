@@ -1,45 +1,46 @@
-// Game configuration constants
+// Game configuration constants - matching agar.io parameters
 
 // Server tick rate (updates per second)
 export const TICK_RATE = 30;
 export const TICK_INTERVAL = 1000 / TICK_RATE;
 
-// Map dimensions
-export const MAP_WIDTH = 5000;
-export const MAP_HEIGHT = 5000;
+// Map dimensions (agar.io: 6000x6000)
+export const MAP_WIDTH = 6000;
+export const MAP_HEIGHT = 6000;
 
-// Player settings
-export const START_MASS = 20;
-export const MIN_MASS = 10;
-export const MAX_SPEED = 450; // pixels per second at minimum mass
-export const MIN_SPEED = 50; // pixels per second at maximum mass (9:1 ratio)
-export const MASS_DECAY_RATE = 0.001; // mass lost per tick as percentage
-
-// Pellet settings
-export const PELLET_COUNT = 2000;
-export const PELLET_MASS = 5;
+// Pellet settings (defined first since START_MASS depends on it)
+export const PELLET_COUNT = 500;
+export const PELLET_MASS = 10; // larger pepperoni for visibility
 export const PELLET_RADIUS = 16;
 
-// Eating rules
-export const EAT_RATIO = 1.1; // Must be 10% larger to eat another player
+// Player settings
+export const START_MASS = Math.round(PELLET_MASS * 1.25); // 25% larger than pepperoni (13)
+export const MIN_MASS = 9; // agar.io: 9
+export const MAX_MASS = 22500; // agar.io: auto-split above this
+export const MASS_DECAY_RATE = 0.002 / TICK_RATE; // agar.io: 0.2% per second
+
+// Eating rules (agar.io: 25% larger to eat)
+export const EAT_RATIO = 1.25;
 
 // Split settings
-export const MIN_SPLIT_MASS = 35; // Minimum mass to split
-export const MAX_CELLS = 16; // Maximum cells per player
+export const MIN_SPLIT_MASS = 35; // agar.io: 35
+export const MAX_CELLS = 16; // agar.io: 16
 export const SPLIT_SPEED = 500; // Initial velocity when splitting
-export const MERGE_TIME = 8000; // Time in ms before cells can merge
+export const MERGE_TIME_BASE = 30000; // agar.io: 30 seconds base
+export const MERGE_TIME_MASS_FACTOR = 0.0233; // agar.io: +2.33% of mass in ms
 
-// Eject settings
-export const EJECT_MASS = 15; // Mass of ejected pellet
+// Eject settings (agar.io: lose 18, pellet is 13-14)
+export const EJECT_MASS = 13; // Mass of ejected pellet
+export const EJECT_MASS_LOSS = 18; // Mass lost when ejecting
 export const MIN_EJECT_MASS = 35; // Minimum mass to eject
 export const EJECT_SPEED = 600; // Speed of ejected mass
 
 // Virus (pizza cutter) settings
-export const VIRUS_COUNT = 30; // Number of viruses on map
-export const VIRUS_RADIUS = 60; // Size of virus (20% larger)
-export const VIRUS_MASS = 100; // Mass gained when eating a virus
-export const VIRUS_SPLIT_MASS = 150; // Minimum mass to be split by virus
-export const VIRUS_SPLIT_COUNT = 8; // Number of pieces when split by virus
+export const VIRUS_COUNT = 30; // agar.io: 10-50
+export const VIRUS_RADIUS = 60; // Size of virus
+export const VIRUS_MASS = 100; // agar.io: 100
+export const VIRUS_MIN_SPLIT_PIECES = 8; // agar.io: 8-16 pieces
+export const VIRUS_MAX_SPLIT_PIECES = 16;
 
 // Velocity decay
 export const VELOCITY_DECAY = 0.92; // Velocity multiplier per tick (friction)

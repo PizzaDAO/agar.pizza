@@ -16,6 +16,7 @@ import {
   MAP_HEIGHT,
   PELLET_COUNT,
   START_MASS,
+  MAX_MASS,
   TOPPING_TYPES,
   TOPPING_COLORS,
   PELLET_RADIUS,
@@ -23,12 +24,13 @@ import {
   MAX_CELLS,
   SPLIT_SPEED,
   EJECT_MASS,
+  EJECT_MASS_LOSS,
   MIN_EJECT_MASS,
   EJECT_SPEED,
   VIRUS_COUNT,
   VIRUS_RADIUS,
-  VIRUS_SPLIT_COUNT,
-  MERGE_TIME
+  VIRUS_MIN_SPLIT_PIECES,
+  VIRUS_MAX_SPLIT_PIECES
 } from './constants';
 import { SpatialHash } from './spatial-hash';
 import {
@@ -41,7 +43,8 @@ import {
   eatCell,
   getPlayerMass,
   mergeCells,
-  checkVirusCollision
+  checkVirusCollision,
+  calculateMergeTime
 } from './physics';
 
 interface GameState {
@@ -195,7 +198,9 @@ export default class GameServer implements Party.Server {
       const newMass = cell.mass / 2;
       cell.mass = newMass;
       cell.radius = massToRadius(cell.mass);
-      cell.mergeTime = now + MERGE_TIME; // Original cell can't merge until later
+      // Merge time based on mass (agar.io: 30s + 2.33% of mass)
+      const mergeTime = calculateMergeTime(newMass);
+      cell.mergeTime = now + mergeTime;
 
       // Create new cell with velocity in target direction
       const newCell: Cell = {
@@ -206,7 +211,7 @@ export default class GameServer implements Party.Server {
         radius: massToRadius(newMass),
         vx: Math.cos(player.targetAngle) * SPLIT_SPEED,
         vy: Math.sin(player.targetAngle) * SPLIT_SPEED,
-        mergeTime: now + MERGE_TIME
+        mergeTime: now + mergeTime
       };
 
       player.cells.push(newCell);
@@ -220,8 +225,8 @@ export default class GameServer implements Party.Server {
     for (const cell of player.cells) {
       if (cell.mass < MIN_EJECT_MASS) continue;
 
-      // Reduce cell mass
-      cell.mass -= EJECT_MASS;
+      // Reduce cell mass (agar.io: lose 18, pellet is 13)
+      cell.mass -= EJECT_MASS_LOSS;
       cell.radius = massToRadius(cell.mass);
 
       // Create ejected pellet moving in target direction
@@ -446,13 +451,16 @@ export default class GameServer implements Party.Server {
 
       for (const virus of this.state.viruses.values()) {
         if (checkVirusCollision(cell, virus)) {
-          // Split this cell into many pieces
-          const numPieces = Math.min(VIRUS_SPLIT_COUNT, MAX_CELLS - player.cells.length + 1);
+          // Split this cell into 8-16 pieces (agar.io style)
+          const maxPossiblePieces = MAX_CELLS - player.cells.length + 1;
+          const targetPieces = Math.min(VIRUS_MAX_SPLIT_PIECES, Math.max(VIRUS_MIN_SPLIT_PIECES, maxPossiblePieces));
+          const numPieces = Math.min(targetPieces, maxPossiblePieces);
           if (numPieces <= 1) continue;
 
           // Divide the cell's mass among the pieces (no mass from virus)
           const piecesMass = cell.mass / numPieces;
           const pieceRadius = massToRadius(piecesMass);
+          const mergeTime = calculateMergeTime(piecesMass);
 
           // Mark original cell for removal
           cellsToRemove.push(i);
@@ -468,7 +476,7 @@ export default class GameServer implements Party.Server {
               radius: pieceRadius,
               vx: Math.cos(angle) * SPLIT_SPEED * 0.8,
               vy: Math.sin(angle) * SPLIT_SPEED * 0.8,
-              mergeTime: now + MERGE_TIME
+              mergeTime: now + mergeTime
             };
             cellsToAdd.push(newCell);
           }

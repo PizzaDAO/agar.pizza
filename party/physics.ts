@@ -1,8 +1,5 @@
 import { Player, Cell, Pellet, Virus } from './types';
 import {
-  MAX_SPEED,
-  MIN_SPEED,
-  START_MASS,
   PELLET_MASS,
   EAT_RATIO,
   MAP_WIDTH,
@@ -11,20 +8,24 @@ import {
   MASS_DECAY_RATE,
   VELOCITY_DECAY,
   MIN_VELOCITY,
-  MERGE_TIME
+  MERGE_TIME_BASE,
+  MERGE_TIME_MASS_FACTOR
 } from './constants';
 
-// Convert mass to radius using sqrt for area-based scaling
+// Convert mass to radius (agar.io formula: 4 + 6√mass)
 export function massToRadius(mass: number): number {
-  return Math.sqrt(mass) * 4;
+  return 4 + Math.sqrt(mass) * 6;
 }
 
-// Calculate speed based on mass (larger = slower)
+// Calculate speed based on mass (agar.io: speed ∝ mass^-0.439)
+// Base speed ~150 at mass 10, scales down with mass
 export function calculateSpeed(mass: number): number {
-  // Inverse sqrt scaling - big cells are much slower
-  // At mass 20: speed ~450, at mass 500: speed ~100, at mass 2000: speed ~50
-  const speedFactor = Math.sqrt(START_MASS / mass);
-  return MIN_SPEED + (MAX_SPEED - MIN_SPEED) * Math.min(1, speedFactor);
+  return 150 * Math.pow(mass, -0.439) * Math.pow(10, 0.439);
+}
+
+// Calculate merge time based on mass (agar.io: 30s + 2.33% of mass)
+export function calculateMergeTime(mass: number): number {
+  return MERGE_TIME_BASE + mass * MERGE_TIME_MASS_FACTOR * 1000;
 }
 
 // Move player toward target angle
