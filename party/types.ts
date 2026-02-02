@@ -20,6 +20,16 @@ export interface Cell {
   y: number;
   mass: number;
   radius: number;
+  vx: number;  // velocity x
+  vy: number;  // velocity y
+  mergeTime: number;  // timestamp when cell can merge
+}
+
+export interface Virus {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
 }
 
 export interface Player {
@@ -86,6 +96,7 @@ export interface SnapshotMessage {
   playerId: string;
   players: SerializedPlayer[];
   pellets: Pellet[];
+  viruses: Virus[];
   leaderboard: LeaderboardEntry[];
 }
 

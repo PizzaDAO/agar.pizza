@@ -2,16 +2,17 @@ import { useEffect, useRef, useCallback } from 'react';
 import { Camera } from './Camera';
 import { Renderer } from './Renderer';
 import { Input } from './Input';
-import { SerializedPlayer, Pellet } from '../../party/types';
+import { SerializedPlayer, Pellet, Virus } from '../../party/types';
 
 interface GameCanvasProps {
   players: Map<string, SerializedPlayer>;
   pellets: Map<string, Pellet>;
+  viruses: Map<string, Virus>;
   playerId: string | null;
   onInput: (angle: number, split?: boolean, eject?: boolean) => void;
 }
 
-export function GameCanvas({ players, pellets, playerId, onInput }: GameCanvasProps) {
+export function GameCanvas({ players, pellets, viruses, playerId, onInput }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
   const cameraRef = useRef<Camera>(new Camera());
@@ -104,11 +105,11 @@ export function GameCanvas({ players, pellets, playerId, onInput }: GameCanvasPr
     }
 
     // Render
-    renderer.render(players, pellets, playerId, camera);
+    renderer.render(players, pellets, viruses, playerId, camera);
 
     // Continue loop
     animationFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [players, pellets, playerId, currentPlayer, onInput]);
+  }, [players, pellets, viruses, playerId, currentPlayer, onInput]);
 
   // Initialize
   useEffect(() => {

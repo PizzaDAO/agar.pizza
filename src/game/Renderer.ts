@@ -1,5 +1,6 @@
 import { Camera } from './Camera';
-import { SerializedPlayer, Pellet } from '../../party/types';
+import { SerializedPlayer, Pellet, Virus } from '../../party/types';
+import { VIRUS_RADIUS } from '../../party/constants';
 import { MAP_WIDTH, MAP_HEIGHT, PELLET_RADIUS } from '../../party/constants';
 
 const PEPPERONI_COUNT = 7;
@@ -12,12 +13,15 @@ export class Renderer {
   private backgroundImage: HTMLImageElement | null = null;
   private backgroundLoaded: boolean = false;
   private backgroundPattern: CanvasPattern | null = null;
+  private pizzaCutterImage: HTMLImageElement | null = null;
+  private pizzaCutterLoaded: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.loadPepperoniImages();
     this.loadBackgroundImage();
+    this.loadPizzaCutterImage();
   }
 
   private loadPepperoniImages(): void {
@@ -43,6 +47,14 @@ export class Renderer {
       this.backgroundPattern = this.ctx.createPattern(this.backgroundImage!, 'repeat');
     };
     this.backgroundImage.src = '/background.png';
+  }
+
+  private loadPizzaCutterImage(): void {
+    this.pizzaCutterImage = new Image();
+    this.pizzaCutterImage.onload = () => {
+      this.pizzaCutterLoaded = true;
+    };
+    this.pizzaCutterImage.src = '/pizza-cutter.png';
   }
 
   private getPepperoniIndex(pelletId: string): number {
@@ -220,15 +232,48 @@ export class Renderer {
     }
   }
 
+  drawViruses(viruses: Map<string, Virus>, camera: Camera): void {
+    for (const virus of viruses.values()) {
+      if (!camera.isVisible(virus.x, virus.y, virus.radius)) {
+        continue;
+      }
+
+      const screen = camera.worldToScreen(virus.x, virus.y);
+      const size = VIRUS_RADIUS * 2 * camera.zoom;
+
+      if (this.pizzaCutterLoaded && this.pizzaCutterImage) {
+        // Draw pizza cutter image
+        this.ctx.drawImage(
+          this.pizzaCutterImage,
+          screen.x - size / 2,
+          screen.y - size / 2,
+          size,
+          size
+        );
+      } else {
+        // Fallback: green spiky circle
+        this.ctx.beginPath();
+        this.ctx.arc(screen.x, screen.y, size / 2, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(0, 200, 0, 0.5)';
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#00aa00';
+        this.ctx.lineWidth = 3;
+        this.ctx.stroke();
+      }
+    }
+  }
+
   render(
     players: Map<string, SerializedPlayer>,
     pellets: Map<string, Pellet>,
+    viruses: Map<string, Virus>,
     myId: string | null,
     camera: Camera
   ): void {
     this.clear();
     this.drawBackground(camera);
     this.drawPellets(pellets, camera);
+    this.drawViruses(viruses, camera);
     this.drawPlayers(players, myId, camera);
   }
 }

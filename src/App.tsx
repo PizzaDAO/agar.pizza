@@ -55,6 +55,7 @@ function App() {
           <GameCanvas
             players={gameData.players}
             pellets={gameData.pellets}
+            viruses={gameData.viruses}
             playerId={gameData.playerId}
             onInput={sendInput}
           />

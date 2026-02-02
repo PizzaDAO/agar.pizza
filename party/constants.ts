@@ -34,6 +34,16 @@ export const EJECT_MASS = 15; // Mass of ejected pellet
 export const MIN_EJECT_MASS = 35; // Minimum mass to eject
 export const EJECT_SPEED = 600; // Speed of ejected mass
 
+// Virus (pizza cutter) settings
+export const VIRUS_COUNT = 30; // Number of viruses on map
+export const VIRUS_RADIUS = 50; // Size of virus
+export const VIRUS_SPLIT_MASS = 150; // Minimum mass to be split by virus
+export const VIRUS_SPLIT_COUNT = 8; // Number of pieces when split by virus
+
+// Velocity decay
+export const VELOCITY_DECAY = 0.92; // Velocity multiplier per tick (friction)
+export const MIN_VELOCITY = 5; // Minimum velocity before stopping
+
 // Respawn settings
 export const RESPAWN_DELAY = 3000; // 3 seconds
 

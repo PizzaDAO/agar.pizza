@@ -7,7 +7,8 @@ import {
   ClientMessage,
   SerializedPlayer,
   LeaderboardEntry,
-  Cell
+  Cell,
+  Virus
 } from './types';
 import {
   TICK_INTERVAL,
@@ -23,7 +24,12 @@ import {
   SPLIT_SPEED,
   EJECT_MASS,
   MIN_EJECT_MASS,
-  EJECT_SPEED
+  EJECT_SPEED,
+  VIRUS_COUNT,
+  VIRUS_RADIUS,
+  VIRUS_SPLIT_MASS,
+  VIRUS_SPLIT_COUNT,
+  MERGE_TIME
 } from './constants';
 import { SpatialHash } from './spatial-hash';
 import {
@@ -34,13 +40,16 @@ import {
   eatPellet,
   canEat,
   eatCell,
-  getPlayerMass
+  getPlayerMass,
+  mergeCells,
+  checkVirusCollision
 } from './physics';
 
 interface GameState {
   players: Map<string, Player>;
   pellets: Map<string, Pellet>;
   pelletSpatialHash: SpatialHash<Pellet>;
+  viruses: Map<string, Virus>;
 }
 
 export default class GameServer implements Party.Server {
@@ -48,12 +57,14 @@ export default class GameServer implements Party.Server {
   private _tickInterval: ReturnType<typeof setInterval> | null = null;
   private lastTickTime: number = 0;
   private pelletIdCounter: number = 0;
+  private virusIdCounter: number = 0;
 
   constructor(readonly room: Party.Room) {
     this.state = {
       players: new Map(),
       pellets: new Map(),
-      pelletSpatialHash: new SpatialHash()
+      pelletSpatialHash: new SpatialHash(),
+      viruses: new Map()
     };
   }
 
@@ -62,6 +73,9 @@ export default class GameServer implements Party.Server {
 
     // Spawn initial pellets
     this.spawnPellets(PELLET_COUNT);
+
+    // Spawn viruses
+    this.spawnViruses(VIRUS_COUNT);
 
     // Start game tick loop
     this.lastTickTime = Date.now();
@@ -115,7 +129,10 @@ export default class GameServer implements Party.Server {
         x: startX,
         y: startY,
         mass: START_MASS,
-        radius: radius
+        radius: radius,
+        vx: 0,
+        vy: 0,
+        mergeTime: 0
       }],
       color,
       score: START_MASS,
@@ -132,6 +149,7 @@ export default class GameServer implements Party.Server {
       playerId: conn.id,
       players: this.serializePlayers(),
       pellets: Array.from(this.state.pellets.values()),
+      viruses: Array.from(this.state.viruses.values()),
       leaderboard: this.getLeaderboard()
     }));
 
@@ -163,6 +181,8 @@ export default class GameServer implements Party.Server {
       cell => cell.mass >= MIN_SPLIT_MASS && player.cells.length < MAX_CELLS
     );
 
+    const now = Date.now();
+
     for (const cell of cellsToSplit) {
       if (player.cells.length >= MAX_CELLS) break;
 
@@ -170,19 +190,19 @@ export default class GameServer implements Party.Server {
       const newMass = cell.mass / 2;
       cell.mass = newMass;
       cell.radius = massToRadius(cell.mass);
+      cell.mergeTime = now + MERGE_TIME; // Original cell can't merge until later
 
-      // Create new cell moving in target direction
+      // Create new cell with velocity in target direction
       const newCell: Cell = {
         id: `${player.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        x: cell.x + Math.cos(player.targetAngle) * cell.radius * 2,
-        y: cell.y + Math.sin(player.targetAngle) * cell.radius * 2,
+        x: cell.x,
+        y: cell.y,
         mass: newMass,
-        radius: massToRadius(newMass)
+        radius: massToRadius(newMass),
+        vx: Math.cos(player.targetAngle) * SPLIT_SPEED,
+        vy: Math.sin(player.targetAngle) * SPLIT_SPEED,
+        mergeTime: now + MERGE_TIME
       };
-
-      // Clamp to map bounds
-      newCell.x = Math.max(newCell.radius, Math.min(MAP_WIDTH - newCell.radius, newCell.x));
-      newCell.y = Math.max(newCell.radius, Math.min(MAP_HEIGHT - newCell.radius, newCell.y));
 
       player.cells.push(newCell);
     }
@@ -247,7 +267,9 @@ export default class GameServer implements Party.Server {
       if (!player.isDead) {
         movePlayer(player, deltaTime);
         applyMassDecay(player);
+        mergeCells(player); // Merge cells that can merge
         this.checkPelletCollisions(player);
+        this.checkVirusCollisions(player); // Check virus collisions
       }
     }
 
@@ -380,6 +402,81 @@ export default class GameServer implements Party.Server {
     }
 
     return newPellets;
+  }
+
+  private spawnViruses(count: number): void {
+    for (let i = 0; i < count; i++) {
+      const virus: Virus = {
+        id: `virus-${this.virusIdCounter++}`,
+        x: Math.random() * (MAP_WIDTH - 200) + 100,
+        y: Math.random() * (MAP_HEIGHT - 200) + 100,
+        radius: VIRUS_RADIUS
+      };
+      this.state.viruses.set(virus.id, virus);
+    }
+  }
+
+  private checkVirusCollisions(player: Player): void {
+    const now = Date.now();
+    const cellsToAdd: Cell[] = [];
+    const cellsToRemove: number[] = [];
+
+    for (let i = 0; i < player.cells.length; i++) {
+      const cell = player.cells[i];
+
+      // Only large cells get split by viruses
+      if (cell.mass < VIRUS_SPLIT_MASS) continue;
+
+      for (const virus of this.state.viruses.values()) {
+        if (checkVirusCollision(cell, virus)) {
+          // Split this cell into many pieces
+          const numPieces = Math.min(VIRUS_SPLIT_COUNT, MAX_CELLS - player.cells.length + 1);
+          if (numPieces <= 1) continue;
+
+          const piecesMass = cell.mass / numPieces;
+          const pieceRadius = massToRadius(piecesMass);
+
+          // Mark original cell for removal
+          cellsToRemove.push(i);
+
+          // Create new cells exploding outward
+          for (let j = 0; j < numPieces; j++) {
+            const angle = (j / numPieces) * Math.PI * 2;
+            const newCell: Cell = {
+              id: `${player.id}-${now}-${j}-${Math.random().toString(36).substr(2, 5)}`,
+              x: cell.x,
+              y: cell.y,
+              mass: piecesMass,
+              radius: pieceRadius,
+              vx: Math.cos(angle) * SPLIT_SPEED * 0.8,
+              vy: Math.sin(angle) * SPLIT_SPEED * 0.8,
+              mergeTime: now + MERGE_TIME
+            };
+            cellsToAdd.push(newCell);
+          }
+
+          // Move virus to new location
+          virus.x = Math.random() * (MAP_WIDTH - 200) + 100;
+          virus.y = Math.random() * (MAP_HEIGHT - 200) + 100;
+
+          break; // Only hit one virus per cell per tick
+        }
+      }
+    }
+
+    // Remove split cells (reverse order)
+    for (const idx of cellsToRemove.sort((a, b) => b - a)) {
+      player.cells.splice(idx, 1);
+    }
+
+    // Add new cells
+    for (const cell of cellsToAdd) {
+      if (player.cells.length < MAX_CELLS) {
+        player.cells.push(cell);
+      }
+    }
+
+    player.score = getPlayerMass(player);
   }
 
   private getLeaderboard(): LeaderboardEntry[] {

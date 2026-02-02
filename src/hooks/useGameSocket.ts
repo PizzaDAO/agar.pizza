@@ -12,6 +12,7 @@ import {
   PelletsSpawnedMessage,
   SerializedPlayer,
   Pellet,
+  Virus,
   LeaderboardEntry
 } from '../../party/types';
 import { encodeMessage, createJoinMessage, createInputMessage } from '../lib/protocol';
@@ -22,6 +23,7 @@ export interface GameData {
   playerId: string | null;
   players: Map<string, SerializedPlayer>;
   pellets: Map<string, Pellet>;
+  viruses: Map<string, Virus>;
   leaderboard: LeaderboardEntry[];
   isDead: boolean;
   killerName: string | null;
@@ -45,6 +47,7 @@ export function useGameSocket(): UseGameSocketReturn {
     playerId: null,
     players: new Map(),
     pellets: new Map(),
+    viruses: new Map(),
     leaderboard: [],
     isDead: false,
     killerName: null
@@ -59,6 +62,7 @@ export function useGameSocket(): UseGameSocketReturn {
         const snapshot = message as SnapshotMessage;
         const players = new Map<string, SerializedPlayer>();
         const pellets = new Map<string, Pellet>();
+        const viruses = new Map<string, Virus>();
 
         for (const player of snapshot.players) {
           players.set(player.id, player);
@@ -66,11 +70,15 @@ export function useGameSocket(): UseGameSocketReturn {
         for (const pellet of snapshot.pellets) {
           pellets.set(pellet.id, pellet);
         }
+        for (const virus of snapshot.viruses || []) {
+          viruses.set(virus.id, virus);
+        }
 
         setGameData({
           playerId: snapshot.playerId,
           players,
           pellets,
+          viruses,
           leaderboard: snapshot.leaderboard,
           isDead: false,
           killerName: null
@@ -194,6 +202,7 @@ export function useGameSocket(): UseGameSocketReturn {
       playerId: null,
       players: new Map(),
       pellets: new Map(),
+      viruses: new Map(),
       leaderboard: [],
       isDead: false,
       killerName: null
