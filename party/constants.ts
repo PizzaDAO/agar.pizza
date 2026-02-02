@@ -23,6 +23,17 @@ export const PELLET_RADIUS = 16;
 // Eating rules
 export const EAT_RATIO = 1.1; // Must be 10% larger to eat another player
 
+// Split settings
+export const MIN_SPLIT_MASS = 35; // Minimum mass to split
+export const MAX_CELLS = 16; // Maximum cells per player
+export const SPLIT_SPEED = 500; // Initial velocity when splitting
+export const MERGE_TIME = 15000; // Time in ms before cells can merge
+
+// Eject settings
+export const EJECT_MASS = 15; // Mass of ejected pellet
+export const MIN_EJECT_MASS = 35; // Minimum mass to eject
+export const EJECT_SPEED = 600; // Speed of ejected mass
+
 // Respawn settings
 export const RESPAWN_DELAY = 3000; // 3 seconds
 

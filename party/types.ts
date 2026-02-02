@@ -71,6 +71,8 @@ export interface JoinMessage {
 export interface InputMessage {
   type: MessageType.INPUT;
   angle: number;
+  split?: boolean;
+  eject?: boolean;
   timestamp: number;
 }
 

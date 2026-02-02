@@ -8,7 +8,7 @@ interface GameCanvasProps {
   players: Map<string, SerializedPlayer>;
   pellets: Map<string, Pellet>;
   playerId: string | null;
-  onInput: (angle: number) => void;
+  onInput: (angle: number, split?: boolean, eject?: boolean) => void;
 }
 
 export function GameCanvas({ players, pellets, playerId, onInput }: GameCanvasProps) {
@@ -18,6 +18,8 @@ export function GameCanvas({ players, pellets, playerId, onInput }: GameCanvasPr
   const inputRef = useRef<Input>(new Input());
   const animationFrameRef = useRef<number>(0);
   const lastInputTimeRef = useRef<number>(0);
+  const splitSentRef = useRef<boolean>(false);
+  const ejectSentRef = useRef<boolean>(false);
 
   // Get current player data
   const currentPlayer = playerId ? players.get(playerId) : null;
@@ -72,11 +74,32 @@ export function GameCanvas({ players, pellets, playerId, onInput }: GameCanvasPr
     // Smooth camera update
     camera.update();
 
-    // Send input at regular intervals (not every frame)
+    // Check for split (space) and eject (W) - only send once per keypress
+    const spacePressed = input.isKeyPressed(' ');
+    const wPressed = input.isKeyPressed('w');
+
+    let split = false;
+    let eject = false;
+
+    if (spacePressed && !splitSentRef.current) {
+      split = true;
+      splitSentRef.current = true;
+    } else if (!spacePressed) {
+      splitSentRef.current = false;
+    }
+
+    if (wPressed && !ejectSentRef.current) {
+      eject = true;
+      ejectSentRef.current = true;
+    } else if (!wPressed) {
+      ejectSentRef.current = false;
+    }
+
+    // Send input at regular intervals (not every frame) or immediately for actions
     const now = Date.now();
-    if (now - lastInputTimeRef.current > 50) { // 20 times per second
+    if (now - lastInputTimeRef.current > 50 || split || eject) { // 20 times per second
       const angle = input.getAngle();
-      onInput(angle);
+      onInput(angle, split, eject);
       lastInputTimeRef.current = now;
     }
 

@@ -17,7 +17,13 @@ import {
   START_MASS,
   TOPPING_TYPES,
   TOPPING_COLORS,
-  PELLET_RADIUS
+  PELLET_RADIUS,
+  MIN_SPLIT_MASS,
+  MAX_CELLS,
+  SPLIT_SPEED,
+  EJECT_MASS,
+  MIN_EJECT_MASS,
+  EJECT_SPEED
 } from './constants';
 import { SpatialHash } from './spatial-hash';
 import {
@@ -75,7 +81,7 @@ export default class GameServer implements Party.Server {
           this.handleJoin(sender, data.name);
           break;
         case MessageType.INPUT:
-          this.handleInput(sender, data.angle);
+          this.handleInput(sender, data.angle, data.split, data.eject);
           break;
         case MessageType.LEAVE:
           this.handleLeave(sender);
@@ -136,12 +142,87 @@ export default class GameServer implements Party.Server {
     }), [conn.id]);
   }
 
-  private handleInput(conn: Party.Connection, angle: number): void {
+  private handleInput(conn: Party.Connection, angle: number, split?: boolean, eject?: boolean): void {
     const player = this.state.players.get(conn.id);
     if (player && !player.isDead) {
       player.targetAngle = angle;
       player.lastUpdate = Date.now();
+
+      if (split) {
+        this.handleSplit(player);
+      }
+      if (eject) {
+        this.handleEject(player);
+      }
     }
+  }
+
+  private handleSplit(player: Player): void {
+    // Split all cells that are large enough
+    const cellsToSplit = player.cells.filter(
+      cell => cell.mass >= MIN_SPLIT_MASS && player.cells.length < MAX_CELLS
+    );
+
+    for (const cell of cellsToSplit) {
+      if (player.cells.length >= MAX_CELLS) break;
+
+      // Split cell in half
+      const newMass = cell.mass / 2;
+      cell.mass = newMass;
+      cell.radius = massToRadius(cell.mass);
+
+      // Create new cell moving in target direction
+      const newCell: Cell = {
+        id: `${player.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        x: cell.x + Math.cos(player.targetAngle) * cell.radius * 2,
+        y: cell.y + Math.sin(player.targetAngle) * cell.radius * 2,
+        mass: newMass,
+        radius: massToRadius(newMass)
+      };
+
+      // Clamp to map bounds
+      newCell.x = Math.max(newCell.radius, Math.min(MAP_WIDTH - newCell.radius, newCell.x));
+      newCell.y = Math.max(newCell.radius, Math.min(MAP_HEIGHT - newCell.radius, newCell.y));
+
+      player.cells.push(newCell);
+    }
+
+    player.score = getPlayerMass(player);
+  }
+
+  private handleEject(player: Player): void {
+    // Eject mass from all cells that are large enough
+    for (const cell of player.cells) {
+      if (cell.mass < MIN_EJECT_MASS) continue;
+
+      // Reduce cell mass
+      cell.mass -= EJECT_MASS;
+      cell.radius = massToRadius(cell.mass);
+
+      // Create ejected pellet moving in target direction
+      const ejectDistance = cell.radius + PELLET_RADIUS + 5;
+      const pellet: Pellet = {
+        id: `ejected-${this.pelletIdCounter++}`,
+        x: cell.x + Math.cos(player.targetAngle) * ejectDistance,
+        y: cell.y + Math.sin(player.targetAngle) * ejectDistance,
+        topping: TOPPING_TYPES[Math.floor(Math.random() * TOPPING_TYPES.length)] as ToppingType
+      };
+
+      // Clamp to map bounds
+      pellet.x = Math.max(PELLET_RADIUS, Math.min(MAP_WIDTH - PELLET_RADIUS, pellet.x));
+      pellet.y = Math.max(PELLET_RADIUS, Math.min(MAP_HEIGHT - PELLET_RADIUS, pellet.y));
+
+      this.state.pellets.set(pellet.id, pellet);
+      this.state.pelletSpatialHash.insert(pellet);
+
+      // Broadcast new pellet
+      this.broadcast(JSON.stringify({
+        type: MessageType.PELLETS_SPAWNED,
+        pellets: [pellet]
+      }));
+    }
+
+    player.score = getPlayerMass(player);
   }
 
   private handleLeave(conn: Party.Connection): void {

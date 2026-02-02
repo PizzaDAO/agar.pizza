@@ -15,10 +15,12 @@ export function createJoinMessage(name: string): JoinMessage {
   };
 }
 
-export function createInputMessage(angle: number): InputMessage {
+export function createInputMessage(angle: number, split?: boolean, eject?: boolean): InputMessage {
   return {
     type: MessageType.INPUT,
     angle,
+    split,
+    eject,
     timestamp: Date.now()
   };
 }

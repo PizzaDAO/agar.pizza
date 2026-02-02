@@ -216,9 +216,9 @@ export function useGameSocket(): UseGameSocketReturn {
   }, [connect]);
 
   // Send input
-  const sendInput = useCallback((angle: number) => {
+  const sendInput = useCallback((angle: number, split?: boolean, eject?: boolean) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(encodeMessage(createInputMessage(angle)));
+      socketRef.current.send(encodeMessage(createInputMessage(angle, split, eject)));
     }
   }, []);
 
