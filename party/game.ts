@@ -112,8 +112,14 @@ export default class GameServer implements Party.Server {
 
   private handleJoin(conn: Party.Connection, name: string): void {
     // Create new player
-    const startX = Math.random() * (MAP_WIDTH - 200) + 100;
-    const startY = Math.random() * (MAP_HEIGHT - 200) + 100;
+    // Spawn within 5% margin (same as movement bounds)
+    const margin = 0.05;
+    const minX = MAP_WIDTH * margin;
+    const maxX = MAP_WIDTH * (1 - margin);
+    const minY = MAP_HEIGHT * margin;
+    const maxY = MAP_HEIGHT * (1 - margin);
+    const startX = minX + Math.random() * (maxX - minX);
+    const startY = minY + Math.random() * (maxY - minY);
     const radius = massToRadius(START_MASS);
 
     // Pick a random color from topping colors

@@ -50,10 +50,14 @@ export function movePlayer(player: Player, deltaTime: number): void {
     cell.x += Math.cos(player.targetAngle) * distance;
     cell.y += Math.sin(player.targetAngle) * distance;
 
-    // Clamp to map bounds
-    const radius = cell.radius;
-    cell.x = Math.max(radius, Math.min(MAP_WIDTH - radius, cell.x));
-    cell.y = Math.max(radius, Math.min(MAP_HEIGHT - radius, cell.y));
+    // Clamp to map bounds (5% margin from borders, same as pepperoni)
+    const margin = 0.05;
+    const minX = MAP_WIDTH * margin;
+    const maxX = MAP_WIDTH * (1 - margin);
+    const minY = MAP_HEIGHT * margin;
+    const maxY = MAP_HEIGHT * (1 - margin);
+    cell.x = Math.max(minX, Math.min(maxX, cell.x));
+    cell.y = Math.max(minY, Math.min(maxY, cell.y));
 
     // Update radius based on current mass
     cell.radius = massToRadius(cell.mass);
