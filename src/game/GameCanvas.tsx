@@ -6,54 +6,43 @@ import { SerializedPlayer, Pellet, Virus } from '../../party/types';
 
 interface GameCanvasProps {
   players: Map<string, SerializedPlayer>;
-  previousPlayers: Map<string, SerializedPlayer>;
-  lastUpdateTime: number;
   pellets: Map<string, Pellet>;
   viruses: Map<string, Virus>;
   playerId: string | null;
   onInput: (angle: number, split?: boolean, eject?: boolean) => void;
 }
 
-// Server sends updates at ~30Hz (33ms)
-const SERVER_TICK_MS = 33;
-// Maximum extrapolation to prevent runaway predictions
-const MAX_EXTRAPOLATION = 2.0;
+// Agar.io-style lerp factor - how fast display positions catch up to server positions
+// Higher = snappier but can show network jitter, Lower = smoother but more latency
+const LERP_FACTOR = 0.16;
 
-function interpolatePositions(
-  prev: Map<string, SerializedPlayer>,
-  current: Map<string, SerializedPlayer>,
-  lastUpdate: number,
-  now: number
-): Map<string, SerializedPlayer> {
-  // Allow t to exceed 1 for extrapolation, but cap it
-  const t = Math.min(MAX_EXTRAPOLATION, (now - lastUpdate) / SERVER_TICK_MS);
-  const result = new Map<string, SerializedPlayer>();
-
-  for (const [id, player] of current) {
-    const prevPlayer = prev.get(id);
-    if (prevPlayer && prevPlayer.cells.length > 0) {
-      // Interpolate/extrapolate cell positions
-      const interpolatedCells = player.cells.map((cell, i) => {
-        const prevCell = prevPlayer.cells[i];
-        if (prevCell) {
-          // Linear interpolation (t <= 1) or extrapolation (t > 1)
-          return {
-            ...cell,
-            x: prevCell.x + (cell.x - prevCell.x) * t,
-            y: prevCell.y + (cell.y - prevCell.y) * t,
-          };
-        }
-        return cell;
-      });
-      result.set(id, { ...player, cells: interpolatedCells });
-    } else {
-      result.set(id, player);
-    }
-  }
-  return result;
+// Lerp helper
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
 }
 
-export function GameCanvas({ players, previousPlayers, lastUpdateTime, pellets, viruses, playerId, onInput }: GameCanvasProps) {
+// Display state for smooth rendering (stored separately from server state)
+interface DisplayCell {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+  mass: number;
+  vx: number;
+  vy: number;
+  mergeTime: number;
+}
+
+interface DisplayPlayer {
+  id: string;
+  name: string;
+  cells: DisplayCell[];
+  score: number;
+  color: string;
+  isDead: boolean;
+}
+
+export function GameCanvas({ players, pellets, viruses, playerId, onInput }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
   const cameraRef = useRef<Camera>(new Camera());
@@ -62,6 +51,9 @@ export function GameCanvas({ players, previousPlayers, lastUpdateTime, pellets, 
   const lastInputTimeRef = useRef<number>(0);
   const splitSentRef = useRef<boolean>(false);
   const ejectSentRef = useRef<boolean>(false);
+
+  // Agar.io-style: maintain display positions that smoothly lerp toward server positions
+  const displayPlayersRef = useRef<Map<string, DisplayPlayer>>(new Map());
 
   // Setup canvas and renderer
   const setupCanvas = useCallback(() => {
@@ -90,31 +82,93 @@ export function GameCanvas({ players, previousPlayers, lastUpdateTime, pellets, 
     const camera = cameraRef.current;
     const renderer = rendererRef.current;
     const input = inputRef.current;
+    const displayPlayers = displayPlayersRef.current;
 
     if (!renderer) {
       animationFrameRef.current = requestAnimationFrame(gameLoop);
       return;
     }
 
-    // Interpolate player positions for smooth rendering
-    const now = Date.now();
-    const interpolatedPlayers = interpolatePositions(
-      previousPlayers,
-      players,
-      lastUpdateTime,
-      now
-    );
+    // Agar.io-style: Update display positions by lerping toward server positions
+    // This runs every frame for smooth 60fps movement regardless of server tick rate
+    for (const [id, serverPlayer] of players) {
+      let displayPlayer = displayPlayers.get(id);
 
-    // Get interpolated current player for camera
-    const interpolatedCurrentPlayer = playerId ? interpolatedPlayers.get(playerId) : null;
+      if (!displayPlayer) {
+        // New player - initialize display state to server position
+        displayPlayer = {
+          id: serverPlayer.id,
+          name: serverPlayer.name,
+          cells: serverPlayer.cells.map(cell => ({ ...cell })),
+          score: serverPlayer.score,
+          color: serverPlayer.color,
+          isDead: serverPlayer.isDead
+        };
+        displayPlayers.set(id, displayPlayer);
+      } else {
+        // Existing player - lerp display positions toward server positions
+        displayPlayer.name = serverPlayer.name;
+        displayPlayer.score = serverPlayer.score;
+        displayPlayer.color = serverPlayer.color;
+        displayPlayer.isDead = serverPlayer.isDead;
 
-    // Update camera target based on interpolated player position
-    if (interpolatedCurrentPlayer && interpolatedCurrentPlayer.cells.length > 0) {
-      // Find center of all cells
+        // Handle cell count changes (split, merge, death)
+        while (displayPlayer.cells.length < serverPlayer.cells.length) {
+          // New cells appear - initialize at server position
+          const newCell = serverPlayer.cells[displayPlayer.cells.length];
+          displayPlayer.cells.push({ ...newCell });
+        }
+        while (displayPlayer.cells.length > serverPlayer.cells.length) {
+          // Cells merged/removed
+          displayPlayer.cells.pop();
+        }
+
+        // Lerp each cell toward its server position
+        for (let i = 0; i < serverPlayer.cells.length; i++) {
+          const serverCell = serverPlayer.cells[i];
+          const displayCell = displayPlayer.cells[i];
+
+          displayCell.x = lerp(displayCell.x, serverCell.x, LERP_FACTOR);
+          displayCell.y = lerp(displayCell.y, serverCell.y, LERP_FACTOR);
+          displayCell.radius = lerp(displayCell.radius, serverCell.radius, LERP_FACTOR);
+          displayCell.mass = serverCell.mass;
+          displayCell.id = serverCell.id;
+          displayCell.vx = serverCell.vx;
+          displayCell.vy = serverCell.vy;
+          displayCell.mergeTime = serverCell.mergeTime;
+        }
+      }
+    }
+
+    // Remove players that left
+    for (const id of displayPlayers.keys()) {
+      if (!players.has(id)) {
+        displayPlayers.delete(id);
+      }
+    }
+
+    // Convert display state to SerializedPlayer format for renderer
+    const renderPlayers = new Map<string, SerializedPlayer>();
+    for (const [id, dp] of displayPlayers) {
+      renderPlayers.set(id, {
+        id: dp.id,
+        name: dp.name,
+        cells: dp.cells,
+        score: dp.score,
+        color: dp.color,
+        isDead: dp.isDead
+      });
+    }
+
+    // Get display player for camera
+    const displayCurrentPlayer = playerId ? displayPlayers.get(playerId) : null;
+
+    // Update camera target based on display player position (not server position)
+    if (displayCurrentPlayer && displayCurrentPlayer.cells.length > 0) {
       let totalMass = 0;
       let x = 0;
       let y = 0;
-      for (const cell of interpolatedCurrentPlayer.cells) {
+      for (const cell of displayCurrentPlayer.cells) {
         x += cell.x * cell.mass;
         y += cell.y * cell.mass;
         totalMass += cell.mass;
@@ -147,18 +201,19 @@ export function GameCanvas({ players, previousPlayers, lastUpdateTime, pellets, 
     }
 
     // Send input at regular intervals (not every frame) or immediately for actions
+    const now = Date.now();
     if (now - lastInputTimeRef.current > 50 || split || eject) { // 20 times per second
       const angle = input.getAngle();
       onInput(angle, split, eject);
       lastInputTimeRef.current = now;
     }
 
-    // Render with interpolated positions
-    renderer.render(interpolatedPlayers, pellets, viruses, playerId, camera);
+    // Render with smooth display positions
+    renderer.render(renderPlayers, pellets, viruses, playerId, camera);
 
     // Continue loop
     animationFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [players, previousPlayers, lastUpdateTime, pellets, viruses, playerId, onInput]);
+  }, [players, pellets, viruses, playerId, onInput]);
 
   // Initialize
   useEffect(() => {

@@ -54,8 +54,6 @@ function App() {
         <div className="game-container">
           <GameCanvas
             players={gameData.players}
-            previousPlayers={gameData.previousPlayers}
-            lastUpdateTime={gameData.lastUpdateTime}
             pellets={gameData.pellets}
             viruses={gameData.viruses}
             playerId={gameData.playerId}

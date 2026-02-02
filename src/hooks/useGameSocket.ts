@@ -23,8 +23,6 @@ export type ConnectionState = 'disconnected' | 'connecting' | 'connected';
 export interface GameData {
   playerId: string | null;
   players: Map<string, SerializedPlayer>;
-  previousPlayers: Map<string, SerializedPlayer>;
-  lastUpdateTime: number;
   pellets: Map<string, Pellet>;
   viruses: Map<string, Virus>;
   leaderboard: LeaderboardEntry[];
@@ -49,8 +47,6 @@ export function useGameSocket(): UseGameSocketReturn {
   const [gameData, setGameData] = useState<GameData>({
     playerId: null,
     players: new Map(),
-    previousPlayers: new Map(),
-    lastUpdateTime: Date.now(),
     pellets: new Map(),
     viruses: new Map(),
     leaderboard: [],
@@ -82,8 +78,6 @@ export function useGameSocket(): UseGameSocketReturn {
         setGameData({
           playerId: snapshot.playerId,
           players,
-          previousPlayers: new Map(),
-          lastUpdateTime: Date.now(),
           pellets,
           viruses,
           leaderboard: snapshot.leaderboard,
@@ -102,8 +96,6 @@ export function useGameSocket(): UseGameSocketReturn {
           }
           return {
             ...prev,
-            previousPlayers: new Map(prev.players),
-            lastUpdateTime: Date.now(),
             players,
             leaderboard: update.leaderboard
           };
@@ -220,8 +212,6 @@ export function useGameSocket(): UseGameSocketReturn {
     setGameData({
       playerId: null,
       players: new Map(),
-      previousPlayers: new Map(),
-      lastUpdateTime: Date.now(),
       pellets: new Map(),
       viruses: new Map(),
       leaderboard: [],

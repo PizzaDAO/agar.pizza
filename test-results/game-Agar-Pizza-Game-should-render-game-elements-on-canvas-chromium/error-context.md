@@ -1,0 +1,51 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - generic:
+    - generic:
+      - generic: Score
+      - generic: "12"
+    - generic:
+      - heading "Leaderboard" [level=3]
+      - generic:
+        - generic: "1."
+        - generic: Queso
+        - generic: "6077"
+      - generic:
+        - generic: "2."
+        - generic: Snax
+        - generic: "4954"
+      - generic:
+        - generic: "3."
+        - generic: jason
+        - generic: "4728"
+      - generic:
+        - generic: "4."
+        - generic: Scrimmy
+        - generic: "3968"
+      - generic:
+        - generic: "5."
+        - generic: yooo
+        - generic: "3809"
+      - generic:
+        - generic: "6."
+        - generic: PizzaLord
+        - generic: "3014"
+      - generic:
+        - generic: "7."
+        - generic: RapidTest
+        - generic: "72"
+      - generic:
+        - generic: "8."
+        - generic: RespawnTest
+        - generic: "42"
+      - generic:
+        - generic: "9."
+        - generic: ActionTest
+        - generic: "32"
+  - generic [ref=e6]:
+    - heading "You were eaten!" [level=2] [ref=e7]
+    - paragraph [ref=e8]: Consumed by Scrimmy
+    - button "Play Again" [ref=e9] [cursor=pointer]
+```
