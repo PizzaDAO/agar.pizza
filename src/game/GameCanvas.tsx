@@ -12,9 +12,8 @@ interface GameCanvasProps {
   onInput: (angle: number, split?: boolean, eject?: boolean) => void;
 }
 
-// Smoothing decay base - lower = smoother but more latency
-// At 60fps this gives ~0.08 lerp factor, matching agar.io feel
-const SMOOTHING_BASE = 0.00001;
+// Fixed lerp factor - agar.io style (assumes ~60fps)
+const LERP_FACTOR = 0.12;
 
 // Lerp helper
 function lerp(a: number, b: number, t: number): number {
@@ -46,7 +45,6 @@ export function GameCanvas({ players, pellets, viruses, playerId, onInput }: Gam
   const inputRef = useRef<Input>(new Input());
   const animationFrameRef = useRef<number>(0);
   const lastInputTimeRef = useRef<number>(0);
-  const lastFrameTimeRef = useRef<number>(performance.now());
   const splitSentRef = useRef<boolean>(false);
   const ejectSentRef = useRef<boolean>(false);
 
@@ -114,16 +112,6 @@ export function GameCanvas({ players, pellets, viruses, playerId, onInput }: Gam
       return;
     }
 
-    // Calculate delta time for frame-rate independent smoothing
-    const now = performance.now();
-    const deltaTime = (now - lastFrameTimeRef.current) / 1000; // seconds
-    lastFrameTimeRef.current = now;
-
-    // Delta-time adjusted lerp factor (consistent smoothing at any frame rate)
-    // At 60fps (dt=0.0167): lerpFactor ≈ 0.08
-    // At 30fps (dt=0.033): lerpFactor ≈ 0.15
-    const lerpFactor = 1 - Math.pow(SMOOTHING_BASE, deltaTime);
-
     // Agar.io-style: Update display positions by lerping toward server positions
     for (const [id, serverPlayer] of serverPlayers) {
       let displayPlayer = displayPlayers.get(id);
@@ -182,9 +170,9 @@ export function GameCanvas({ players, pellets, viruses, playerId, onInput }: Gam
             displayPlayer.cells.set(serverCell.id, displayCell);
           } else {
             // Existing cell - lerp toward server position
-            displayCell.x = lerp(displayCell.x, serverCell.x, lerpFactor);
-            displayCell.y = lerp(displayCell.y, serverCell.y, lerpFactor);
-            displayCell.radius = lerp(displayCell.radius, serverCell.radius, lerpFactor);
+            displayCell.x = lerp(displayCell.x, serverCell.x, LERP_FACTOR);
+            displayCell.y = lerp(displayCell.y, serverCell.y, LERP_FACTOR);
+            displayCell.radius = lerp(displayCell.radius, serverCell.radius, LERP_FACTOR);
             displayCell.mass = serverCell.mass;
           }
         }
