@@ -9,11 +9,15 @@ export class Renderer {
   private canvas: HTMLCanvasElement;
   private pepperoniImages: HTMLImageElement[] = [];
   private imagesLoaded: boolean = false;
+  private backgroundImage: HTMLImageElement | null = null;
+  private backgroundLoaded: boolean = false;
+  private backgroundPattern: CanvasPattern | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.loadPepperoniImages();
+    this.loadBackgroundImage();
   }
 
   private loadPepperoniImages(): void {
@@ -31,6 +35,16 @@ export class Renderer {
     }
   }
 
+  private loadBackgroundImage(): void {
+    this.backgroundImage = new Image();
+    this.backgroundImage.onload = () => {
+      this.backgroundLoaded = true;
+      // Create a repeating pattern from the image
+      this.backgroundPattern = this.ctx.createPattern(this.backgroundImage!, 'repeat');
+    };
+    this.backgroundImage.src = '/background.png';
+  }
+
   private getPepperoniIndex(pelletId: string): number {
     // Use pellet ID to get consistent random pepperoni variant
     const hash = pelletId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -38,51 +52,66 @@ export class Renderer {
   }
 
   clear(): void {
-    // Dark background
-    this.ctx.fillStyle = '#1a1a2e';
+    // Dark background fallback
+    this.ctx.fillStyle = '#8B7355';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  drawGrid(camera: Camera): void {
-    const gridSize = 100;
-    const bounds = camera.getVisibleBounds();
-
-    // Extend bounds to grid boundaries
-    const startX = Math.floor(bounds.minX / gridSize) * gridSize;
-    const startY = Math.floor(bounds.minY / gridSize) * gridSize;
-    const endX = Math.ceil(bounds.maxX / gridSize) * gridSize;
-    const endY = Math.ceil(bounds.maxY / gridSize) * gridSize;
-
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    this.ctx.lineWidth = 1;
-
-    // Vertical lines
-    for (let x = startX; x <= endX; x += gridSize) {
-      if (x < 0 || x > MAP_WIDTH) continue;
-      const screenStart = camera.worldToScreen(x, Math.max(0, bounds.minY));
-      const screenEnd = camera.worldToScreen(x, Math.min(MAP_HEIGHT, bounds.maxY));
-      this.ctx.beginPath();
-      this.ctx.moveTo(screenStart.x, screenStart.y);
-      this.ctx.lineTo(screenEnd.x, screenEnd.y);
-      this.ctx.stroke();
+  drawBackground(camera: Camera): void {
+    if (!this.backgroundLoaded || !this.backgroundImage) {
+      // Fallback: cardboard-ish color
+      this.ctx.fillStyle = '#8B7355';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      return;
     }
 
-    // Horizontal lines
-    for (let y = startY; y <= endY; y += gridSize) {
-      if (y < 0 || y > MAP_HEIGHT) continue;
-      const screenStart = camera.worldToScreen(Math.max(0, bounds.minX), y);
-      const screenEnd = camera.worldToScreen(Math.min(MAP_WIDTH, bounds.maxX), y);
-      this.ctx.beginPath();
-      this.ctx.moveTo(screenStart.x, screenStart.y);
-      this.ctx.lineTo(screenEnd.x, screenEnd.y);
-      this.ctx.stroke();
-    }
+    // Save context state
+    this.ctx.save();
 
-    // Draw map boundary
-    this.ctx.strokeStyle = 'rgba(255, 193, 7, 0.5)';
-    this.ctx.lineWidth = 4 * camera.zoom;
+    // Get the map area in screen coordinates
     const topLeft = camera.worldToScreen(0, 0);
     const bottomRight = camera.worldToScreen(MAP_WIDTH, MAP_HEIGHT);
+
+    // Calculate tile size in screen space (scale with zoom)
+    const tileSize = this.backgroundImage.width * camera.zoom;
+
+    // Draw dark outside the map
+    this.ctx.fillStyle = '#1a1a1a';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Clip to map bounds
+    this.ctx.beginPath();
+    this.ctx.rect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+    this.ctx.clip();
+
+    // Draw tiled background within map bounds
+    const startWorldX = Math.floor(camera.getVisibleBounds().minX / this.backgroundImage.width) * this.backgroundImage.width;
+    const startWorldY = Math.floor(camera.getVisibleBounds().minY / this.backgroundImage.height) * this.backgroundImage.height;
+    const endWorldX = camera.getVisibleBounds().maxX;
+    const endWorldY = camera.getVisibleBounds().maxY;
+
+    for (let worldX = startWorldX; worldX < endWorldX; worldX += this.backgroundImage.width) {
+      for (let worldY = startWorldY; worldY < endWorldY; worldY += this.backgroundImage.height) {
+        // Clamp to map bounds
+        if (worldX + this.backgroundImage.width < 0 || worldX > MAP_WIDTH) continue;
+        if (worldY + this.backgroundImage.height < 0 || worldY > MAP_HEIGHT) continue;
+
+        const screenPos = camera.worldToScreen(worldX, worldY);
+        this.ctx.drawImage(
+          this.backgroundImage,
+          screenPos.x,
+          screenPos.y,
+          tileSize,
+          tileSize
+        );
+      }
+    }
+
+    this.ctx.restore();
+
+    // Draw map boundary
+    this.ctx.strokeStyle = 'rgba(139, 69, 19, 0.8)';
+    this.ctx.lineWidth = 6 * camera.zoom;
     this.ctx.strokeRect(
       topLeft.x,
       topLeft.y,
@@ -229,7 +258,7 @@ export class Renderer {
     camera: Camera
   ): void {
     this.clear();
-    this.drawGrid(camera);
+    this.drawBackground(camera);
     this.drawPellets(pellets, camera);
     this.drawPlayers(players, myId, camera);
   }
