@@ -16,6 +16,8 @@ interface GameCanvasProps {
 
 // Server sends updates at ~30Hz (33ms)
 const SERVER_TICK_MS = 33;
+// Maximum extrapolation to prevent runaway predictions
+const MAX_EXTRAPOLATION = 2.0;
 
 function interpolatePositions(
   prev: Map<string, SerializedPlayer>,
@@ -23,16 +25,18 @@ function interpolatePositions(
   lastUpdate: number,
   now: number
 ): Map<string, SerializedPlayer> {
-  const t = Math.min(1, (now - lastUpdate) / SERVER_TICK_MS);
+  // Allow t to exceed 1 for extrapolation, but cap it
+  const t = Math.min(MAX_EXTRAPOLATION, (now - lastUpdate) / SERVER_TICK_MS);
   const result = new Map<string, SerializedPlayer>();
 
   for (const [id, player] of current) {
     const prevPlayer = prev.get(id);
     if (prevPlayer && prevPlayer.cells.length > 0) {
-      // Interpolate cell positions
+      // Interpolate/extrapolate cell positions
       const interpolatedCells = player.cells.map((cell, i) => {
         const prevCell = prevPlayer.cells[i];
         if (prevCell) {
+          // Linear interpolation (t <= 1) or extrapolation (t > 1)
           return {
             ...cell,
             x: prevCell.x + (cell.x - prevCell.x) * t,
