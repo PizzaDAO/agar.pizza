@@ -71,6 +71,7 @@ export enum MessageType {
   PELLET_EATEN = 'PELLET_EATEN',
   PELLETS_SPAWNED = 'PELLETS_SPAWNED',
   VIRUS_SPAWNED = 'VIRUS_SPAWNED',
+  VIRUS_EATEN = 'VIRUS_EATEN',
 }
 
 // Client -> Server messages
@@ -140,6 +141,11 @@ export interface VirusSpawnedMessage {
   virus: Virus;
 }
 
+export interface VirusEatenMessage {
+  type: MessageType.VIRUS_EATEN;
+  virusId: string;
+}
+
 // Serialized player for network transmission
 export interface SerializedPlayer {
   id: string;
@@ -159,4 +165,5 @@ export type ServerMessage =
   | PlayerDiedMessage
   | PelletEatenMessage
   | PelletsSpawnedMessage
-  | VirusSpawnedMessage;
+  | VirusSpawnedMessage
+  | VirusEatenMessage;
