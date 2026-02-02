@@ -9,7 +9,9 @@
     "build": "tsc && vite build",
     "deploy:party": "partykit deploy",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "dependencies": {
     "partykit": "^0.0.115",
