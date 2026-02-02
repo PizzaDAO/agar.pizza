@@ -11,8 +11,8 @@ export const MAP_HEIGHT = 5000;
 // Player settings
 export const START_MASS = 20;
 export const MIN_MASS = 10;
-export const MAX_SPEED = 300; // pixels per second at minimum mass
-export const MIN_SPEED = 100; // pixels per second at maximum mass
+export const MAX_SPEED = 450; // pixels per second at minimum mass
+export const MIN_SPEED = 50; // pixels per second at maximum mass (9:1 ratio)
 export const MASS_DECAY_RATE = 0.001; // mass lost per tick as percentage
 
 // Pellet settings
@@ -27,7 +27,7 @@ export const EAT_RATIO = 1.1; // Must be 10% larger to eat another player
 export const MIN_SPLIT_MASS = 35; // Minimum mass to split
 export const MAX_CELLS = 16; // Maximum cells per player
 export const SPLIT_SPEED = 500; // Initial velocity when splitting
-export const MERGE_TIME = 15000; // Time in ms before cells can merge
+export const MERGE_TIME = 8000; // Time in ms before cells can merge
 
 // Eject settings
 export const EJECT_MASS = 15; // Mass of ejected pellet

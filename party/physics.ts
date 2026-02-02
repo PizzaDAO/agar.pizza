@@ -21,9 +21,10 @@ export function massToRadius(mass: number): number {
 
 // Calculate speed based on mass (larger = slower)
 export function calculateSpeed(mass: number): number {
-  // Logarithmic scaling for smoother speed curve
-  const speedFactor = 1 - Math.log(mass / START_MASS + 1) / Math.log(100);
-  return MIN_SPEED + (MAX_SPEED - MIN_SPEED) * Math.max(0.1, speedFactor);
+  // Inverse sqrt scaling - big cells are much slower
+  // At mass 20: speed ~450, at mass 500: speed ~100, at mass 2000: speed ~50
+  const speedFactor = Math.sqrt(START_MASS / mass);
+  return MIN_SPEED + (MAX_SPEED - MIN_SPEED) * Math.min(1, speedFactor);
 }
 
 // Move player toward target angle
