@@ -10,6 +10,7 @@ import {
   PlayerDiedMessage,
   PelletEatenMessage,
   PelletsSpawnedMessage,
+  VirusSpawnedMessage,
   SerializedPlayer,
   Pellet,
   Virus,
@@ -155,6 +156,16 @@ export function useGameSocket(): UseGameSocketReturn {
             pellets.set(pellet.id, pellet);
           }
           return { ...prev, pellets };
+        });
+        break;
+      }
+
+      case MessageType.VIRUS_SPAWNED: {
+        const spawned = message as VirusSpawnedMessage;
+        setGameData(prev => {
+          const viruses = new Map(prev.viruses);
+          viruses.set(spawned.virus.id, spawned.virus);
+          return { ...prev, viruses };
         });
         break;
       }

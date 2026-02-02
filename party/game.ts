@@ -288,6 +288,18 @@ export default class GameServer implements Party.Server {
       }
     }
 
+    // Respawn viruses if needed (slower than pellets - 1 per tick max)
+    const virusDeficit = VIRUS_COUNT - this.state.viruses.size;
+    if (virusDeficit > 0 && Math.random() < 0.1) { // 10% chance per tick to spawn a virus
+      const newVirus = this.spawnVirus();
+      if (newVirus) {
+        this.broadcast(JSON.stringify({
+          type: MessageType.VIRUS_SPAWNED,
+          virus: newVirus
+        }));
+      }
+    }
+
     // Broadcast game state update
     this.broadcast(JSON.stringify({
       type: MessageType.UPDATE,
@@ -412,20 +424,32 @@ export default class GameServer implements Party.Server {
 
   private spawnViruses(count: number): void {
     for (let i = 0; i < count; i++) {
-      const virus: Virus = {
-        id: `virus-${this.virusIdCounter++}`,
-        x: Math.random() * (MAP_WIDTH - 200) + 100,
-        y: Math.random() * (MAP_HEIGHT - 200) + 100,
-        radius: VIRUS_RADIUS
-      };
-      this.state.viruses.set(virus.id, virus);
+      this.spawnVirus();
     }
+  }
+
+  private spawnVirus(): Virus | null {
+    const margin = 0.1; // 10% margin from borders
+    const minX = MAP_WIDTH * margin;
+    const maxX = MAP_WIDTH * (1 - margin);
+    const minY = MAP_HEIGHT * margin;
+    const maxY = MAP_HEIGHT * (1 - margin);
+
+    const virus: Virus = {
+      id: `virus-${this.virusIdCounter++}`,
+      x: minX + Math.random() * (maxX - minX),
+      y: minY + Math.random() * (maxY - minY),
+      radius: VIRUS_RADIUS
+    };
+    this.state.viruses.set(virus.id, virus);
+    return virus;
   }
 
   private checkVirusCollisions(player: Player): void {
     const now = Date.now();
     const cellsToAdd: Cell[] = [];
     const cellsToRemove: number[] = [];
+    const virusesToRemove: string[] = [];
 
     for (let i = 0; i < player.cells.length; i++) {
       const cell = player.cells[i];
@@ -434,6 +458,8 @@ export default class GameServer implements Party.Server {
       if (cell.mass <= VIRUS_MASS) continue;
 
       for (const virus of this.state.viruses.values()) {
+        if (virusesToRemove.includes(virus.id)) continue;
+
         if (checkVirusCollision(cell, virus)) {
           // Split this cell into many pieces
           const numPieces = Math.min(VIRUS_SPLIT_COUNT, MAX_CELLS - player.cells.length + 1);
@@ -463,13 +489,17 @@ export default class GameServer implements Party.Server {
             cellsToAdd.push(newCell);
           }
 
-          // Move virus to new location
-          virus.x = Math.random() * (MAP_WIDTH - 200) + 100;
-          virus.y = Math.random() * (MAP_HEIGHT - 200) + 100;
+          // Mark virus for removal (it gets absorbed)
+          virusesToRemove.push(virus.id);
 
           break; // Only hit one virus per cell per tick
         }
       }
+    }
+
+    // Remove absorbed viruses
+    for (const virusId of virusesToRemove) {
+      this.state.viruses.delete(virusId);
     }
 
     // Remove split cells (reverse order)
