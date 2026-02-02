@@ -2,13 +2,39 @@ import { Camera } from './Camera';
 import { SerializedPlayer, Pellet } from '../../party/types';
 import { MAP_WIDTH, MAP_HEIGHT, PELLET_RADIUS } from '../../party/constants';
 
+const PEPPERONI_COUNT = 7;
+
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
   private canvas: HTMLCanvasElement;
+  private pepperoniImages: HTMLImageElement[] = [];
+  private imagesLoaded: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
+    this.loadPepperoniImages();
+  }
+
+  private loadPepperoniImages(): void {
+    let loadedCount = 0;
+    for (let i = 1; i <= PEPPERONI_COUNT; i++) {
+      const img = new Image();
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === PEPPERONI_COUNT) {
+          this.imagesLoaded = true;
+        }
+      };
+      img.src = `/pepperoni${i}.png`;
+      this.pepperoniImages.push(img);
+    }
+  }
+
+  private getPepperoniIndex(pelletId: string): number {
+    // Use pellet ID to get consistent random pepperoni variant
+    const hash = pelletId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return hash % PEPPERONI_COUNT;
   }
 
   clear(): void {
@@ -73,53 +99,26 @@ export class Renderer {
       }
 
       const screen = camera.worldToScreen(pellet.x, pellet.y);
-      const radius = PELLET_RADIUS * camera.zoom;
+      const size = PELLET_RADIUS * 2 * camera.zoom;
 
-      // Draw pepperoni style
-      // Base red circle
-      this.ctx.beginPath();
-      this.ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
-
-      // Pepperoni gradient (darker edges like real pepperoni)
-      const gradient = this.ctx.createRadialGradient(
-        screen.x - radius * 0.2,
-        screen.y - radius * 0.2,
-        0,
-        screen.x,
-        screen.y,
-        radius
-      );
-      gradient.addColorStop(0, '#E53935');   // Bright red center
-      gradient.addColorStop(0.6, '#C62828'); // Medium red
-      gradient.addColorStop(1, '#8B0000');   // Dark red edge (curled up)
-
-      this.ctx.fillStyle = gradient;
-      this.ctx.fill();
-
-      // Add darker spots (fat spots on pepperoni)
-      if (radius > 4) {
-        // Use pellet id to get consistent random positions
-        const seed = parseInt(pellet.id.replace(/\D/g, '').slice(-4)) || 0;
-        const spotCount = 3;
-        for (let i = 0; i < spotCount; i++) {
-          const angle = ((seed + i * 137) % 360) * Math.PI / 180;
-          const dist = radius * 0.4 * ((seed + i * 73) % 100) / 100;
-          const spotX = screen.x + Math.cos(angle) * dist;
-          const spotY = screen.y + Math.sin(angle) * dist;
-          const spotRadius = radius * 0.15;
-
-          this.ctx.beginPath();
-          this.ctx.arc(spotX, spotY, spotRadius, 0, Math.PI * 2);
-          this.ctx.fillStyle = 'rgba(139, 0, 0, 0.4)';
-          this.ctx.fill();
-        }
+      // Draw pepperoni sprite
+      if (this.imagesLoaded) {
+        const imgIndex = this.getPepperoniIndex(pellet.id);
+        const img = this.pepperoniImages[imgIndex];
+        this.ctx.drawImage(
+          img,
+          screen.x - size / 2,
+          screen.y - size / 2,
+          size,
+          size
+        );
+      } else {
+        // Fallback: simple red circle while images load
+        this.ctx.beginPath();
+        this.ctx.arc(screen.x, screen.y, size / 2, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#C62828';
+        this.ctx.fill();
       }
-
-      // Subtle shine highlight
-      this.ctx.beginPath();
-      this.ctx.arc(screen.x - radius * 0.3, screen.y - radius * 0.3, radius * 0.2, 0, Math.PI * 2);
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      this.ctx.fill();
     }
   }
 
