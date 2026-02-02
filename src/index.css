@@ -1,0 +1,252 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+body {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Lobby styles */
+.lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.lobby h1 {
+  font-size: 48px;
+  color: #FFC107;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.lobby h2 {
+  font-size: 24px;
+  color: #ccc;
+  font-weight: normal;
+}
+
+.lobby input {
+  padding: 16px 24px;
+  font-size: 18px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  width: 300px;
+  text-align: center;
+  outline: none;
+  transition: background 0.2s;
+}
+
+.lobby input:focus {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.lobby input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.lobby button {
+  padding: 16px 48px;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background: #FFC107;
+  color: #1a1a2e;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.lobby button:hover {
+  background: #FFD54F;
+  transform: scale(1.05);
+}
+
+.lobby button:disabled {
+  background: #666;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Game canvas */
+.game-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.game-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* HUD styles */
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.hud-score {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 12px 20px;
+  border-radius: 8px;
+}
+
+.hud-score .score-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #FFC107;
+}
+
+.hud-score .score-label {
+  font-size: 14px;
+  color: #aaa;
+}
+
+.leaderboard {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 16px;
+  border-radius: 8px;
+  min-width: 200px;
+}
+
+.leaderboard h3 {
+  margin-bottom: 12px;
+  color: #FFC107;
+  font-size: 16px;
+}
+
+.leaderboard-entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.leaderboard-entry.self {
+  color: #FFC107;
+  font-weight: bold;
+}
+
+.leaderboard-rank {
+  width: 24px;
+  color: #888;
+}
+
+.leaderboard-name {
+  flex: 1;
+  margin: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-score {
+  color: #aaa;
+}
+
+/* Death screen */
+.death-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  pointer-events: auto;
+}
+
+.death-screen h2 {
+  font-size: 48px;
+  color: #D32F2F;
+  margin-bottom: 16px;
+}
+
+.death-screen p {
+  font-size: 24px;
+  color: #ccc;
+  margin-bottom: 32px;
+}
+
+.death-screen .killer-name {
+  color: #FFC107;
+  font-weight: bold;
+}
+
+.death-screen button {
+  padding: 16px 48px;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background: #FFC107;
+  color: #1a1a2e;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.death-screen button:hover {
+  background: #FFD54F;
+  transform: scale(1.05);
+}
+
+/* Connecting overlay */
+.connecting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.connecting .spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #FFC107;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
