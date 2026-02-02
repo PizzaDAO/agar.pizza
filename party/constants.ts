@@ -17,8 +17,8 @@ export const MASS_DECAY_RATE = 0.001; // mass lost per tick as percentage
 
 // Pellet settings
 export const PELLET_COUNT = 2000;
-export const PELLET_MASS = 2;
-export const PELLET_RADIUS = 10;
+export const PELLET_MASS = 5;
+export const PELLET_RADIUS = 12;
 
 // Eating rules
 export const EAT_RATIO = 1.1; // Must be 10% larger to eat another player

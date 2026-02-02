@@ -1,6 +1,6 @@
 import { Camera } from './Camera';
 import { SerializedPlayer, Pellet } from '../../party/types';
-import { MAP_WIDTH, MAP_HEIGHT, TOPPING_COLORS, PELLET_RADIUS } from '../../party/constants';
+import { MAP_WIDTH, MAP_HEIGHT, PELLET_RADIUS } from '../../party/constants';
 
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
@@ -66,9 +66,6 @@ export class Renderer {
   }
 
   drawPellets(pellets: Map<string, Pellet>, camera: Camera): void {
-    // bounds available for future culling optimization
-    void camera.getVisibleBounds();
-
     for (const pellet of pellets.values()) {
       // Culling: skip pellets outside visible area
       if (!camera.isVisible(pellet.x, pellet.y, PELLET_RADIUS)) {
@@ -78,17 +75,51 @@ export class Renderer {
       const screen = camera.worldToScreen(pellet.x, pellet.y);
       const radius = PELLET_RADIUS * camera.zoom;
 
-      // Draw pellet as colored circle
+      // Draw pepperoni style
+      // Base red circle
       this.ctx.beginPath();
       this.ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
-      this.ctx.fillStyle = TOPPING_COLORS[pellet.topping] || '#FFC107';
+
+      // Pepperoni gradient (darker edges like real pepperoni)
+      const gradient = this.ctx.createRadialGradient(
+        screen.x - radius * 0.2,
+        screen.y - radius * 0.2,
+        0,
+        screen.x,
+        screen.y,
+        radius
+      );
+      gradient.addColorStop(0, '#E53935');   // Bright red center
+      gradient.addColorStop(0.6, '#C62828'); // Medium red
+      gradient.addColorStop(1, '#8B0000');   // Dark red edge (curled up)
+
+      this.ctx.fillStyle = gradient;
       this.ctx.fill();
 
-      // Add slight glow effect
-      this.ctx.shadowColor = TOPPING_COLORS[pellet.topping] || '#FFC107';
-      this.ctx.shadowBlur = 5;
+      // Add darker spots (fat spots on pepperoni)
+      if (radius > 4) {
+        // Use pellet id to get consistent random positions
+        const seed = parseInt(pellet.id.replace(/\D/g, '').slice(-4)) || 0;
+        const spotCount = 3;
+        for (let i = 0; i < spotCount; i++) {
+          const angle = ((seed + i * 137) % 360) * Math.PI / 180;
+          const dist = radius * 0.4 * ((seed + i * 73) % 100) / 100;
+          const spotX = screen.x + Math.cos(angle) * dist;
+          const spotY = screen.y + Math.sin(angle) * dist;
+          const spotRadius = radius * 0.15;
+
+          this.ctx.beginPath();
+          this.ctx.arc(spotX, spotY, spotRadius, 0, Math.PI * 2);
+          this.ctx.fillStyle = 'rgba(139, 0, 0, 0.4)';
+          this.ctx.fill();
+        }
+      }
+
+      // Subtle shine highlight
+      this.ctx.beginPath();
+      this.ctx.arc(screen.x - radius * 0.3, screen.y - radius * 0.3, radius * 0.2, 0, Math.PI * 2);
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
       this.ctx.fill();
-      this.ctx.shadowBlur = 0;
     }
   }
 
