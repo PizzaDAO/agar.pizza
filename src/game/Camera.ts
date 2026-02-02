@@ -10,7 +10,7 @@ export class Camera {
 
   private screenWidth: number = 0;
   private screenHeight: number = 0;
-  private smoothing: number = 0.05;
+  private smoothing: number = 0.12;
 
   setScreenSize(width: number, height: number): void {
     this.screenWidth = width;

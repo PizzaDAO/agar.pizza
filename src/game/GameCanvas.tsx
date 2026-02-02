@@ -6,13 +6,50 @@ import { SerializedPlayer, Pellet, Virus } from '../../party/types';
 
 interface GameCanvasProps {
   players: Map<string, SerializedPlayer>;
+  previousPlayers: Map<string, SerializedPlayer>;
+  lastUpdateTime: number;
   pellets: Map<string, Pellet>;
   viruses: Map<string, Virus>;
   playerId: string | null;
   onInput: (angle: number, split?: boolean, eject?: boolean) => void;
 }
 
-export function GameCanvas({ players, pellets, viruses, playerId, onInput }: GameCanvasProps) {
+// Server sends updates at ~30Hz (33ms)
+const SERVER_TICK_MS = 33;
+
+function interpolatePositions(
+  prev: Map<string, SerializedPlayer>,
+  current: Map<string, SerializedPlayer>,
+  lastUpdate: number,
+  now: number
+): Map<string, SerializedPlayer> {
+  const t = Math.min(1, (now - lastUpdate) / SERVER_TICK_MS);
+  const result = new Map<string, SerializedPlayer>();
+
+  for (const [id, player] of current) {
+    const prevPlayer = prev.get(id);
+    if (prevPlayer && prevPlayer.cells.length > 0) {
+      // Interpolate cell positions
+      const interpolatedCells = player.cells.map((cell, i) => {
+        const prevCell = prevPlayer.cells[i];
+        if (prevCell) {
+          return {
+            ...cell,
+            x: prevCell.x + (cell.x - prevCell.x) * t,
+            y: prevCell.y + (cell.y - prevCell.y) * t,
+          };
+        }
+        return cell;
+      });
+      result.set(id, { ...player, cells: interpolatedCells });
+    } else {
+      result.set(id, player);
+    }
+  }
+  return result;
+}
+
+export function GameCanvas({ players, previousPlayers, lastUpdateTime, pellets, viruses, playerId, onInput }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
   const cameraRef = useRef<Camera>(new Camera());
@@ -21,9 +58,6 @@ export function GameCanvas({ players, pellets, viruses, playerId, onInput }: Gam
   const lastInputTimeRef = useRef<number>(0);
   const splitSentRef = useRef<boolean>(false);
   const ejectSentRef = useRef<boolean>(false);
-
-  // Get current player data
-  const currentPlayer = playerId ? players.get(playerId) : null;
 
   // Setup canvas and renderer
   const setupCanvas = useCallback(() => {
@@ -58,13 +92,25 @@ export function GameCanvas({ players, pellets, viruses, playerId, onInput }: Gam
       return;
     }
 
-    // Update camera target based on player position
-    if (currentPlayer && currentPlayer.cells.length > 0) {
+    // Interpolate player positions for smooth rendering
+    const now = Date.now();
+    const interpolatedPlayers = interpolatePositions(
+      previousPlayers,
+      players,
+      lastUpdateTime,
+      now
+    );
+
+    // Get interpolated current player for camera
+    const interpolatedCurrentPlayer = playerId ? interpolatedPlayers.get(playerId) : null;
+
+    // Update camera target based on interpolated player position
+    if (interpolatedCurrentPlayer && interpolatedCurrentPlayer.cells.length > 0) {
       // Find center of all cells
       let totalMass = 0;
       let x = 0;
       let y = 0;
-      for (const cell of currentPlayer.cells) {
+      for (const cell of interpolatedCurrentPlayer.cells) {
         x += cell.x * cell.mass;
         y += cell.y * cell.mass;
         totalMass += cell.mass;
@@ -97,19 +143,18 @@ export function GameCanvas({ players, pellets, viruses, playerId, onInput }: Gam
     }
 
     // Send input at regular intervals (not every frame) or immediately for actions
-    const now = Date.now();
     if (now - lastInputTimeRef.current > 50 || split || eject) { // 20 times per second
       const angle = input.getAngle();
       onInput(angle, split, eject);
       lastInputTimeRef.current = now;
     }
 
-    // Render
-    renderer.render(players, pellets, viruses, playerId, camera);
+    // Render with interpolated positions
+    renderer.render(interpolatedPlayers, pellets, viruses, playerId, camera);
 
     // Continue loop
     animationFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [players, pellets, viruses, playerId, currentPlayer, onInput]);
+  }, [players, previousPlayers, lastUpdateTime, pellets, viruses, playerId, onInput]);
 
   // Initialize
   useEffect(() => {
