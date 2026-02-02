@@ -387,12 +387,18 @@ export default class GameServer implements Party.Server {
 
   private spawnPellets(count: number): Pellet[] {
     const newPellets: Pellet[] = [];
+    // Keep pellets 5% away from borders
+    const margin = 0.05;
+    const minX = MAP_WIDTH * margin;
+    const maxX = MAP_WIDTH * (1 - margin);
+    const minY = MAP_HEIGHT * margin;
+    const maxY = MAP_HEIGHT * (1 - margin);
 
     for (let i = 0; i < count; i++) {
       const pellet: Pellet = {
         id: `pellet-${this.pelletIdCounter++}`,
-        x: Math.random() * MAP_WIDTH,
-        y: Math.random() * MAP_HEIGHT,
+        x: minX + Math.random() * (maxX - minX),
+        y: minY + Math.random() * (maxY - minY),
         topping: TOPPING_TYPES[Math.floor(Math.random() * TOPPING_TYPES.length)] as ToppingType
       };
 
