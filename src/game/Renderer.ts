@@ -58,66 +58,35 @@ export class Renderer {
   }
 
   drawBackground(camera: Camera): void {
-    if (!this.backgroundLoaded || !this.backgroundImage) {
-      // Fallback: cardboard-ish color
-      this.ctx.fillStyle = '#8B7355';
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      return;
-    }
-
-    // Save context state
-    this.ctx.save();
-
-    // Get the map area in screen coordinates
-    const topLeft = camera.worldToScreen(0, 0);
-    const bottomRight = camera.worldToScreen(MAP_WIDTH, MAP_HEIGHT);
-
-    // Calculate tile size in screen space (scale with zoom)
-    const tileSize = this.backgroundImage.width * camera.zoom;
-
     // Draw dark outside the map
     this.ctx.fillStyle = '#1a1a1a';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Clip to map bounds
-    this.ctx.beginPath();
-    this.ctx.rect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
-    this.ctx.clip();
+    // Get the map area in screen coordinates
+    const topLeft = camera.worldToScreen(0, 0);
+    const bottomRight = camera.worldToScreen(MAP_WIDTH, MAP_HEIGHT);
+    const mapWidth = bottomRight.x - topLeft.x;
+    const mapHeight = bottomRight.y - topLeft.y;
 
-    // Draw tiled background within map bounds
-    const startWorldX = Math.floor(camera.getVisibleBounds().minX / this.backgroundImage.width) * this.backgroundImage.width;
-    const startWorldY = Math.floor(camera.getVisibleBounds().minY / this.backgroundImage.height) * this.backgroundImage.height;
-    const endWorldX = camera.getVisibleBounds().maxX;
-    const endWorldY = camera.getVisibleBounds().maxY;
-
-    for (let worldX = startWorldX; worldX < endWorldX; worldX += this.backgroundImage.width) {
-      for (let worldY = startWorldY; worldY < endWorldY; worldY += this.backgroundImage.height) {
-        // Clamp to map bounds
-        if (worldX + this.backgroundImage.width < 0 || worldX > MAP_WIDTH) continue;
-        if (worldY + this.backgroundImage.height < 0 || worldY > MAP_HEIGHT) continue;
-
-        const screenPos = camera.worldToScreen(worldX, worldY);
-        this.ctx.drawImage(
-          this.backgroundImage,
-          screenPos.x,
-          screenPos.y,
-          tileSize,
-          tileSize
-        );
-      }
+    if (this.backgroundLoaded && this.backgroundImage) {
+      // Draw single background image stretched to cover entire map
+      this.ctx.drawImage(
+        this.backgroundImage,
+        topLeft.x,
+        topLeft.y,
+        mapWidth,
+        mapHeight
+      );
+    } else {
+      // Fallback: cardboard-ish color
+      this.ctx.fillStyle = '#8B7355';
+      this.ctx.fillRect(topLeft.x, topLeft.y, mapWidth, mapHeight);
     }
-
-    this.ctx.restore();
 
     // Draw map boundary
     this.ctx.strokeStyle = 'rgba(139, 69, 19, 0.8)';
     this.ctx.lineWidth = 6 * camera.zoom;
-    this.ctx.strokeRect(
-      topLeft.x,
-      topLeft.y,
-      bottomRight.x - topLeft.x,
-      bottomRight.y - topLeft.y
-    );
+    this.ctx.strokeRect(topLeft.x, topLeft.y, mapWidth, mapHeight);
   }
 
   drawPellets(pellets: Map<string, Pellet>, camera: Camera): void {
