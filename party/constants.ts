@@ -1,4 +1,5 @@
 // Game configuration constants - matching agar.io parameters
+// VARIATION: CHAOS MODE - More hazards, more splitting, pure chaos
 
 // Server tick rate (updates per second)
 export const TICK_RATE = 30;
@@ -22,9 +23,9 @@ export const MASS_DECAY_RATE = 0.002 / TICK_RATE; // agar.io: 0.2% per second
 // Eating rules (agar.io: 25% larger to eat)
 export const EAT_RATIO = 1.25;
 
-// Split settings
-export const MIN_SPLIT_MASS = 35; // agar.io: 35
-export const MAX_CELLS = 16; // agar.io: 16
+// Split settings - CHAOS VARIATION
+export const MIN_SPLIT_MASS = 25; // CHANGED: easier to split (was 35)
+export const MAX_CELLS = 24; // CHANGED: more fragments allowed (was 16)
 export const SPLIT_SPEED = 500; // Initial velocity when splitting
 export const MERGE_TIME_BASE = 30000; // agar.io: 30 seconds base
 export const MERGE_TIME_MASS_FACTOR = 0.0233; // agar.io: +2.33% of mass in ms
@@ -35,12 +36,12 @@ export const EJECT_MASS_LOSS = 18; // Mass lost when ejecting
 export const MIN_EJECT_MASS = 35; // Minimum mass to eject
 export const EJECT_SPEED = 1200; // Speed of ejected mass (increased for more distance)
 
-// Virus (pizza cutter) settings
-export const VIRUS_COUNT = 30; // agar.io: 10-50
+// Virus (pizza cutter) settings - CHAOS VARIATION
+export const VIRUS_COUNT = 60; // CHANGED: double the hazards (was 30)
 export const VIRUS_RADIUS = 60; // Size of virus
 export const VIRUS_MASS = 100; // agar.io: 100
-export const VIRUS_MIN_SPLIT_PIECES = 8; // Fixed at 8 pieces for pizza slicers
-export const VIRUS_MAX_SPLIT_PIECES = 8; // Cap at 8 pieces (was 16)
+export const VIRUS_MIN_SPLIT_PIECES = 6; // CHANGED: variable (was 8)
+export const VIRUS_MAX_SPLIT_PIECES = 12; // CHANGED: more pieces (was 8)
 
 // Velocity decay
 export const VELOCITY_DECAY = 0.92; // Velocity multiplier per tick (friction)
