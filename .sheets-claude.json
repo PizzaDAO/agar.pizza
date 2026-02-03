@@ -1,0 +1,16 @@
+{
+  "sheet_url": "https://docs.google.com/spreadsheets/d/1LZaKcHLCpmXDtf3ypT1FpoYvw4f04Afq69YfNX3ecUs/edit?gid=0#gid=0",
+  "column_mapping": {
+    "id": "A",
+    "task": "C",
+    "stage": "B",
+    "priority": "A",
+    "due": "D",
+    "leadId": "E",
+    "lead": "F",
+    "tags": "I",
+    "notes": "J"
+  },
+  "header_row": 5,
+  "data_start_row": 6
+}

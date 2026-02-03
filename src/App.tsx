@@ -72,6 +72,34 @@ function App() {
           )}
         </div>
       )}
+
+      {/* GitHub + Google Sheets links - bottom right */}
+      <div className="fixed bottom-4 right-4 flex items-center gap-3 z-50">
+        <a
+          href="https://docs.google.com/spreadsheets/d/1LZaKcHLCpmXDtf3ypT1FpoYvw4f04Afq69YfNX3ecUs/edit"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Task Sheet"
+        >
+          <img
+            src="https://cdn.simpleicons.org/googlesheets/A67B5B"
+            alt="Google Sheets"
+            className="w-8 h-8 opacity-80 hover:opacity-100 transition-opacity"
+          />
+        </a>
+        <a
+          href="https://github.com/PizzaDAO/agar.pizza"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="GitHub"
+        >
+          <img
+            src="https://cdn.simpleicons.org/github/A67B5B"
+            alt="GitHub"
+            className="w-8 h-8 opacity-80 hover:opacity-100 transition-opacity"
+          />
+        </a>
+      </div>
     </div>
   );
 }
