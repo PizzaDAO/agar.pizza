@@ -1,4 +1,5 @@
 // Game configuration constants - matching agar.io parameters
+// VARIATION: FAST MERGE - Blobs reconstitute much faster
 
 // Server tick rate (updates per second)
 export const TICK_RATE = 30;
@@ -22,12 +23,12 @@ export const MASS_DECAY_RATE = 0.002 / TICK_RATE; // agar.io: 0.2% per second
 // Eating rules (agar.io: 25% larger to eat)
 export const EAT_RATIO = 1.25;
 
-// Split settings
+// Split settings - FAST MERGE VARIATION
 export const MIN_SPLIT_MASS = 35; // agar.io: 35
 export const MAX_CELLS = 16; // agar.io: 16
 export const SPLIT_SPEED = 500; // Initial velocity when splitting
-export const MERGE_TIME_BASE = 30000; // agar.io: 30 seconds base
-export const MERGE_TIME_MASS_FACTOR = 0.0233; // agar.io: +2.33% of mass in ms
+export const MERGE_TIME_BASE = 10000; // CHANGED: 10 seconds (was 30)
+export const MERGE_TIME_MASS_FACTOR = 0.01; // CHANGED: reduced (was 0.0233)
 
 // Eject settings (agar.io: lose 18, pellet is 13-14)
 export const EJECT_MASS = 13; // Mass of ejected pellet
