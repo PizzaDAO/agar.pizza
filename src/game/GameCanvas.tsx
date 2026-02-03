@@ -10,6 +10,7 @@ interface GameCanvasProps {
   viruses: Map<string, Virus>;
   playerId: string | null;
   onInput: (angle: number, split?: boolean, eject?: boolean) => void;
+  playerNFTImage?: string | null;
 }
 
 // Fixed lerp factor - agar.io style (assumes ~60fps)
@@ -38,7 +39,7 @@ interface DisplayPlayer {
   isDead: boolean;
 }
 
-export function GameCanvas({ players, pellets, viruses, playerId, onInput }: GameCanvasProps) {
+export function GameCanvas({ players, pellets, viruses, playerId, onInput, playerNFTImage }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
   const cameraRef = useRef<Camera>(new Camera());
@@ -94,7 +95,12 @@ export function GameCanvas({ players, pellets, viruses, playerId, onInput }: Gam
     if (!rendererRef.current) {
       rendererRef.current = new Renderer(canvas);
     }
-  }, []);
+
+    // Update player NFT image in renderer
+    if (rendererRef.current && playerNFTImage !== undefined) {
+      rendererRef.current.setPlayerNFTImage(playerNFTImage);
+    }
+  }, [playerNFTImage]);
 
   // Game loop - NO dependencies on props, reads from refs
   const gameLoop = useCallback(() => {

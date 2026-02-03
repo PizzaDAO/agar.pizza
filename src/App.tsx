@@ -1,15 +1,24 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useGameSocket } from './hooks/useGameSocket';
 import { GameCanvas } from './game/GameCanvas';
 import { Lobby } from './components/Lobby';
 import { HUD } from './components/HUD';
 import { DeathScreen } from './components/DeathScreen';
+import { NFTPicker } from './components/NFTPicker';
+import { getSelectedNFT } from './lib/nft-fetch';
 
 type GameState = 'lobby' | 'playing' | 'dead';
 
 function App() {
   const [gameState, setGameState] = useState<GameState>('lobby');
   const [playerName, setPlayerName] = useState('');
+  const [selectedNFTImage, setSelectedNFTImage] = useState<string | null>(null);
+  const [showNFTPicker, setShowNFTPicker] = useState(false);
+
+  // Load selected NFT from localStorage on mount
+  useEffect(() => {
+    setSelectedNFTImage(getSelectedNFT());
+  }, []);
 
   const {
     connectionState,
@@ -41,12 +50,18 @@ function App() {
   // Check if player died
   const isDead = gameData.isDead;
 
+  const handleNFTSelect = useCallback((imageUrl: string | null) => {
+    setSelectedNFTImage(imageUrl);
+  }, []);
+
   return (
     <div className="app">
       {gameState === 'lobby' && (
         <Lobby
           onPlay={handlePlay}
           isConnecting={connectionState === 'connecting'}
+          onOpenNFTPicker={() => setShowNFTPicker(true)}
+          selectedNFTImage={selectedNFTImage}
         />
       )}
 
@@ -58,6 +73,7 @@ function App() {
             viruses={gameData.viruses}
             playerId={gameData.playerId}
             onInput={sendInput}
+            playerNFTImage={selectedNFTImage}
           />
           <HUD
             score={score}
@@ -72,6 +88,12 @@ function App() {
           )}
         </div>
       )}
+
+      <NFTPicker
+        isOpen={showNFTPicker}
+        onClose={() => setShowNFTPicker(false)}
+        onSelect={handleNFTSelect}
+      />
 
       {/* GitHub + Google Sheets links - bottom right */}
       <div style={{
