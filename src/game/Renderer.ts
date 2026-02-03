@@ -62,11 +62,10 @@ export class Renderer {
 
   private loadDefaultPizzaImage(): void {
     this.defaultPizzaImage = new Image();
-    this.defaultPizzaImage.crossOrigin = 'anonymous';
     this.defaultPizzaImage.onload = () => {
       this.defaultPizzaLoaded = true;
     };
-    this.defaultPizzaImage.src = 'https://kristineskitchenblog.com/wp-content/uploads/2024/07/margherita-pizza-22-2.jpg';
+    this.defaultPizzaImage.src = '/margherita.jpg';
   }
 
   private getPepperoniIndex(pelletId: string): number {
