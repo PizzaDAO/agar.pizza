@@ -230,7 +230,8 @@ export default class GameServer implements Party.Server {
       cell.radius = massToRadius(cell.mass);
 
       // Create ejected pellet moving in target direction
-      const ejectDistance = cell.radius + PELLET_RADIUS + 5;
+      // EJECT_SPEED determines how far the pellet travels (in game units)
+      const ejectDistance = cell.radius + EJECT_SPEED;
       const pellet: Pellet = {
         id: `ejected-${this.pelletIdCounter++}`,
         x: cell.x + Math.cos(player.targetAngle) * ejectDistance,

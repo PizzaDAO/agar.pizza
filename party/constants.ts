@@ -33,14 +33,14 @@ export const MERGE_TIME_MASS_FACTOR = 0.0233; // agar.io: +2.33% of mass in ms
 export const EJECT_MASS = 13; // Mass of ejected pellet
 export const EJECT_MASS_LOSS = 18; // Mass lost when ejecting
 export const MIN_EJECT_MASS = 35; // Minimum mass to eject
-export const EJECT_SPEED = 600; // Speed of ejected mass
+export const EJECT_SPEED = 1200; // Speed of ejected mass (increased for more distance)
 
 // Virus (pizza cutter) settings
 export const VIRUS_COUNT = 30; // agar.io: 10-50
 export const VIRUS_RADIUS = 60; // Size of virus
 export const VIRUS_MASS = 100; // agar.io: 100
-export const VIRUS_MIN_SPLIT_PIECES = 8; // agar.io: 8-16 pieces
-export const VIRUS_MAX_SPLIT_PIECES = 16;
+export const VIRUS_MIN_SPLIT_PIECES = 8; // Fixed at 8 pieces for pizza slicers
+export const VIRUS_MAX_SPLIT_PIECES = 8; // Cap at 8 pieces (was 16)
 
 // Velocity decay
 export const VELOCITY_DECAY = 0.92; // Velocity multiplier per tick (friction)
