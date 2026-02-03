@@ -15,6 +15,8 @@ export class Renderer {
   private backgroundPattern: CanvasPattern | null = null;
   private pizzaCutterImage: HTMLImageElement | null = null;
   private pizzaCutterLoaded: boolean = false;
+  private defaultPizzaImage: HTMLImageElement | null = null;
+  private defaultPizzaLoaded: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -22,6 +24,7 @@ export class Renderer {
     this.loadPepperoniImages();
     this.loadBackgroundImage();
     this.loadPizzaCutterImage();
+    this.loadDefaultPizzaImage();
   }
 
   private loadPepperoniImages(): void {
@@ -55,6 +58,15 @@ export class Renderer {
       this.pizzaCutterLoaded = true;
     };
     this.pizzaCutterImage.src = '/pizza-cutter.png';
+  }
+
+  private loadDefaultPizzaImage(): void {
+    this.defaultPizzaImage = new Image();
+    this.defaultPizzaImage.crossOrigin = 'anonymous';
+    this.defaultPizzaImage.onload = () => {
+      this.defaultPizzaLoaded = true;
+    };
+    this.defaultPizzaImage.src = 'https://kristineskitchenblog.com/wp-content/uploads/2024/07/margherita-pizza-22-2.jpg';
   }
 
   private getPepperoniIndex(pelletId: string): number {
@@ -157,36 +169,63 @@ export class Renderer {
       const screen = camera.worldToScreen(cell.x, cell.y);
       const radius = cell.radius * camera.zoom;
 
-      // Draw pizza base (cheese circle)
+      // Draw pizza image clipped to circle
+      if (this.defaultPizzaLoaded && this.defaultPizzaImage) {
+        this.ctx.save();
+
+        // Create circular clipping path
+        this.ctx.beginPath();
+        this.ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+        this.ctx.clip();
+
+        // Draw the pizza image centered and scaled to cover the circle
+        const imgSize = radius * 2;
+        this.ctx.drawImage(
+          this.defaultPizzaImage,
+          screen.x - radius,
+          screen.y - radius,
+          imgSize,
+          imgSize
+        );
+
+        this.ctx.restore();
+
+        // Draw crust outline
+        this.ctx.beginPath();
+        this.ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+        this.ctx.strokeStyle = '#8B4513';
+        this.ctx.lineWidth = Math.max(3, radius * 0.08);
+        this.ctx.stroke();
+      } else {
+        // Fallback: gradient pizza look
+        this.ctx.beginPath();
+        this.ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+
+        const gradient = this.ctx.createRadialGradient(
+          screen.x - radius * 0.3,
+          screen.y - radius * 0.3,
+          0,
+          screen.x,
+          screen.y,
+          radius
+        );
+        gradient.addColorStop(0, '#FFE082');
+        gradient.addColorStop(0.7, '#FFC107');
+        gradient.addColorStop(1, '#FF9800');
+
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+
+        this.ctx.strokeStyle = '#E65100';
+        this.ctx.lineWidth = Math.max(2, radius * 0.08);
+        this.ctx.stroke();
+      }
+
+      // Draw player color accent ring
       this.ctx.beginPath();
-      this.ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
-
-      // Gradient for pizza look
-      const gradient = this.ctx.createRadialGradient(
-        screen.x - radius * 0.3,
-        screen.y - radius * 0.3,
-        0,
-        screen.x,
-        screen.y,
-        radius
-      );
-      gradient.addColorStop(0, '#FFE082');  // Light cheese
-      gradient.addColorStop(0.7, '#FFC107'); // Cheese
-      gradient.addColorStop(1, '#FF9800');   // Crust
-
-      this.ctx.fillStyle = gradient;
-      this.ctx.fill();
-
-      // Draw crust outline
-      this.ctx.strokeStyle = '#E65100';
-      this.ctx.lineWidth = Math.max(2, radius * 0.08);
-      this.ctx.stroke();
-
-      // Draw player color accent
-      this.ctx.beginPath();
-      this.ctx.arc(screen.x, screen.y, radius * 0.85, 0, Math.PI * 2);
+      this.ctx.arc(screen.x, screen.y, radius * 0.92, 0, Math.PI * 2);
       this.ctx.strokeStyle = player.color;
-      this.ctx.lineWidth = Math.max(3, radius * 0.1);
+      this.ctx.lineWidth = Math.max(3, radius * 0.06);
       this.ctx.stroke();
 
       // Highlight if it's the local player
