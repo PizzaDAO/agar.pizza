@@ -74,17 +74,28 @@ function App() {
       )}
 
       {/* GitHub + Google Sheets links - bottom right */}
-      <div className="fixed bottom-4 right-4 flex items-center gap-3 z-50">
+      <div style={{
+        position: 'fixed',
+        bottom: '16px',
+        right: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        zIndex: 9999
+      }}>
         <a
           href="https://docs.google.com/spreadsheets/d/1LZaKcHLCpmXDtf3ypT1FpoYvw4f04Afq69YfNX3ecUs/edit"
           target="_blank"
           rel="noopener noreferrer"
           title="Task Sheet"
+          style={{ opacity: 0.8 }}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
         >
           <img
             src="https://cdn.simpleicons.org/googlesheets/A67B5B"
             alt="Google Sheets"
-            className="w-8 h-8 opacity-80 hover:opacity-100 transition-opacity"
+            style={{ width: '32px', height: '32px' }}
           />
         </a>
         <a
@@ -92,11 +103,14 @@ function App() {
           target="_blank"
           rel="noopener noreferrer"
           title="GitHub"
+          style={{ opacity: 0.8 }}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
         >
           <img
             src="https://cdn.simpleicons.org/github/A67B5B"
             alt="GitHub"
-            className="w-8 h-8 opacity-80 hover:opacity-100 transition-opacity"
+            style={{ width: '32px', height: '32px' }}
           />
         </a>
       </div>
