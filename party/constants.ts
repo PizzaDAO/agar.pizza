@@ -1,4 +1,5 @@
 // Game configuration constants - matching agar.io parameters
+// VARIATION: TITAN MODE - Grow to massive sizes
 
 // Server tick rate (updates per second)
 export const TICK_RATE = 30;
@@ -8,16 +9,16 @@ export const TICK_INTERVAL = 1000 / TICK_RATE;
 export const MAP_WIDTH = 6000;
 export const MAP_HEIGHT = 6000;
 
-// Pellet settings (defined first since START_MASS depends on it)
+// Pellet settings - TITAN VARIATION
 export const PELLET_COUNT = 500;
-export const PELLET_MASS = 10; // larger pepperoni for visibility
-export const PELLET_RADIUS = 16;
+export const PELLET_MASS = 20; // CHANGED: grow faster (was 10)
+export const PELLET_RADIUS = 20; // Bigger to match mass
 
-// Player settings
-export const START_MASS = Math.round(PELLET_MASS * 1.25); // 25% larger than pepperoni (13)
+// Player settings - TITAN VARIATION
+export const START_MASS = 25; // CHANGED: start bigger (was 13)
 export const MIN_MASS = 9; // agar.io: 9
-export const MAX_MASS = 22500; // agar.io: auto-split above this
-export const MASS_DECAY_RATE = 0.002 / TICK_RATE; // agar.io: 0.2% per second
+export const MAX_MASS = 50000; // CHANGED: 2x bigger max (was 22500)
+export const MASS_DECAY_RATE = (0.002 * 0.5) / TICK_RATE; // CHANGED: 50% slower decay
 
 // Eating rules (agar.io: 25% larger to eat)
 export const EAT_RATIO = 1.25;
