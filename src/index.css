@@ -250,3 +250,9 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* RainbowKit override styles */
+[data-rk] {
+  --rk-colors-connectButtonBackground: rgba(255, 193, 7, 0.2);
+  --rk-colors-connectButtonText: #FFC107;
+}
