@@ -1,66 +1,66 @@
 // Game configuration constants - matching agar.io parameters
-// VARIATION: CHAOS MODE - More hazards, more splitting, pure chaos
+// VARIATION: TINY ARENA - Small map forces constant combat
 
 // Server tick rate (updates per second)
 export const TICK_RATE = 30;
 export const TICK_INTERVAL = 1000 / TICK_RATE;
 
-// Map dimensions (agar.io: 6000x6000)
-export const MAP_WIDTH = 6000;
-export const MAP_HEIGHT = 6000;
+// Map dimensions - TINY ARENA VARIATION
+export const MAP_WIDTH = 3000; // CHANGED: half size (was 6000)
+export const MAP_HEIGHT = 3000; // CHANGED: half size (was 6000)
 
-// Pellet settings (defined first since START_MASS depends on it)
-export const PELLET_COUNT = 500;
-export const PELLET_MASS = 10; // larger pepperoni for visibility
+// Pellet settings
+export const PELLET_COUNT = 300; // CHANGED: less pellets, more fighting (was 500)
+export const PELLET_MASS = 10;
 export const PELLET_RADIUS = 16;
 
 // Player settings
-export const START_MASS = Math.round(PELLET_MASS * 1.25); // 25% larger than pepperoni (13)
-export const MIN_MASS = 9; // agar.io: 9
-export const MAX_MASS = 22500; // agar.io: auto-split above this
-export const MASS_DECAY_RATE = 0.002 / TICK_RATE; // agar.io: 0.2% per second
+export const START_MASS = Math.round(PELLET_MASS * 1.25);
+export const MIN_MASS = 9;
+export const MAX_MASS = 15000; // CHANGED: lower cap for small map (was 22500)
+export const MASS_DECAY_RATE = 0.002 / TICK_RATE;
 
-// Eating rules (agar.io: 25% larger to eat)
+// Eating rules
 export const EAT_RATIO = 1.25;
 
-// Split settings - CHAOS VARIATION
-export const MIN_SPLIT_MASS = 25; // CHANGED: easier to split (was 35)
-export const MAX_CELLS = 24; // CHANGED: more fragments allowed (was 16)
-export const SPLIT_SPEED = 500; // Initial velocity when splitting
-export const MERGE_TIME_BASE = 30000; // agar.io: 30 seconds base
-export const MERGE_TIME_MASS_FACTOR = 0.0233; // agar.io: +2.33% of mass in ms
+// Split settings - TINY ARENA VARIATION
+export const MIN_SPLIT_MASS = 35;
+export const MAX_CELLS = 12; // CHANGED: fewer cells, easier to track (was 16)
+export const SPLIT_SPEED = 400; // CHANGED: shorter splits for small map (was 500)
+export const MERGE_TIME_BASE = 20000; // CHANGED: faster merge for action (was 30000)
+export const MERGE_TIME_MASS_FACTOR = 0.0233;
 
-// Eject settings (agar.io: lose 18, pellet is 13-14)
-export const EJECT_MASS = 13; // Mass of ejected pellet
-export const EJECT_MASS_LOSS = 18; // Mass lost when ejecting
-export const MIN_EJECT_MASS = 35; // Minimum mass to eject
-export const EJECT_SPEED = 1200; // Speed of ejected mass (increased for more distance)
+// Eject settings
+export const EJECT_MASS = 13;
+export const EJECT_MASS_LOSS = 18;
+export const MIN_EJECT_MASS = 35;
+export const EJECT_SPEED = 800; // CHANGED: shorter eject (was 1200)
 
-// Virus (pizza cutter) settings - CHAOS VARIATION
-export const VIRUS_COUNT = 60; // CHANGED: double the hazards (was 30)
-export const VIRUS_RADIUS = 60; // Size of virus
-export const VIRUS_MASS = 100; // agar.io: 100
-export const VIRUS_MIN_SPLIT_PIECES = 6; // CHANGED: variable (was 8)
-export const VIRUS_MAX_SPLIT_PIECES = 12; // CHANGED: more pieces (was 8)
+// Virus (pizza cutter) settings - TINY ARENA VARIATION
+export const VIRUS_COUNT = 20; // CHANGED: fewer for small map (was 30)
+export const VIRUS_RADIUS = 60;
+export const VIRUS_MASS = 100;
+export const VIRUS_MIN_SPLIT_PIECES = 8;
+export const VIRUS_MAX_SPLIT_PIECES = 8;
 
 // Velocity decay
-export const VELOCITY_DECAY = 0.92; // Velocity multiplier per tick (friction)
-export const MIN_VELOCITY = 5; // Minimum velocity before stopping
+export const VELOCITY_DECAY = 0.92;
+export const MIN_VELOCITY = 5;
 
 // Respawn settings
-export const RESPAWN_DELAY = 3000; // 3 seconds
+export const RESPAWN_DELAY = 2000; // CHANGED: faster respawn (was 3000)
 
 // Spatial hash cell size (for collision optimization)
-export const CELL_SIZE = 200;
+export const CELL_SIZE = 150; // CHANGED: smaller for small map (was 200)
 
 // Topping colors
 export const TOPPING_COLORS: Record<string, string> = {
-  pepperoni: '#D32F2F',  // red
-  mushroom: '#D7CCC8',   // tan
-  olive: '#212121',      // black
-  pepper: '#4CAF50',     // green
-  sausage: '#795548',    // brown
-  pineapple: '#FFC107',  // yellow
+  pepperoni: '#D32F2F',
+  mushroom: '#D7CCC8',
+  olive: '#212121',
+  pepper: '#4CAF50',
+  sausage: '#795548',
+  pineapple: '#FFC107',
 };
 
 export const TOPPING_TYPES = Object.keys(TOPPING_COLORS);
