@@ -1,5 +1,5 @@
 // Game configuration constants - matching agar.io parameters
-// VARIATION: MINEFIELD - 60 pizza cutters, navigate carefully
+// VARIATION: MAGNET - Blobs stay close together after splitting
 
 // Server tick rate (updates per second)
 export const TICK_RATE = 30;
@@ -23,32 +23,32 @@ export const MASS_DECAY_RATE = 0.002 / TICK_RATE;
 // Eating rules
 export const EAT_RATIO = 1.25;
 
-// Split settings
+// Split settings - MAGNET VARIATION
 export const MIN_SPLIT_MASS = 35;
 export const MAX_CELLS = 16;
-export const SPLIT_SPEED = 500;
-export const MERGE_TIME_BASE = 20000; // CHANGED: faster merge to recover (was 30000)
-export const MERGE_TIME_MASS_FACTOR = 0.0233;
+export const SPLIT_SPEED = 250; // CHANGED: slow split, stay close (was 500)
+export const MERGE_TIME_BASE = 8000; // CHANGED: 8 seconds (was 30000)
+export const MERGE_TIME_MASS_FACTOR = 0.005; // CHANGED: minimal mass penalty (was 0.0233)
 
-// Eject settings
+// Eject settings - MAGNET VARIATION
 export const EJECT_MASS = 13;
 export const EJECT_MASS_LOSS = 18;
 export const MIN_EJECT_MASS = 35;
-export const EJECT_SPEED = 1200;
+export const EJECT_SPEED = 800; // CHANGED: shorter eject range (was 1200)
 
-// Virus (pizza cutter) settings - MINEFIELD VARIATION
-export const VIRUS_COUNT = 60; // CHANGED: 2x pizza cutters! (was 30)
-export const VIRUS_RADIUS = 55; // CHANGED: slightly smaller (was 60)
-export const VIRUS_MASS = 80; // CHANGED: trigger at lower mass (was 100)
-export const VIRUS_MIN_SPLIT_PIECES = 6; // CHANGED: fewer pieces (was 8)
+// Virus (pizza cutter) settings
+export const VIRUS_COUNT = 30;
+export const VIRUS_RADIUS = 60;
+export const VIRUS_MASS = 100;
+export const VIRUS_MIN_SPLIT_PIECES = 8;
 export const VIRUS_MAX_SPLIT_PIECES = 8;
 
-// Velocity decay
-export const VELOCITY_DECAY = 0.92;
-export const MIN_VELOCITY = 5;
+// Velocity decay - MAGNET VARIATION
+export const VELOCITY_DECAY = 0.85; // CHANGED: high friction, stop fast (was 0.92)
+export const MIN_VELOCITY = 8; // CHANGED: stop sooner (was 5)
 
 // Respawn settings
-export const RESPAWN_DELAY = 2000; // CHANGED: faster respawn (was 3000)
+export const RESPAWN_DELAY = 3000;
 
 // Spatial hash cell size (for collision optimization)
 export const CELL_SIZE = 200;
