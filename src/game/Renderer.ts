@@ -17,6 +17,9 @@ export class Renderer {
   private pizzaCutterLoaded: boolean = false;
   private defaultPizzaImage: HTMLImageElement | null = null;
   private defaultPizzaLoaded: boolean = false;
+  private playerNFTImage: HTMLImageElement | null = null;
+  private playerNFTLoaded: boolean = false;
+  private playerNFTUrl: string | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -25,6 +28,28 @@ export class Renderer {
     this.loadBackgroundImage();
     this.loadPizzaCutterImage();
     this.loadDefaultPizzaImage();
+  }
+
+  setPlayerNFTImage(url: string | null): void {
+    if (url === this.playerNFTUrl) return; // No change
+
+    this.playerNFTUrl = url;
+    this.playerNFTLoaded = false;
+    this.playerNFTImage = null;
+
+    if (url) {
+      this.playerNFTImage = new Image();
+      this.playerNFTImage.crossOrigin = 'anonymous';
+      this.playerNFTImage.onload = () => {
+        this.playerNFTLoaded = true;
+      };
+      this.playerNFTImage.onerror = () => {
+        console.warn('Failed to load NFT image, using default');
+        this.playerNFTLoaded = false;
+        this.playerNFTImage = null;
+      };
+      this.playerNFTImage.src = url;
+    }
   }
 
   private loadPepperoniImages(): void {
@@ -168,8 +193,14 @@ export class Renderer {
       const screen = camera.worldToScreen(cell.x, cell.y);
       const radius = cell.radius * camera.zoom;
 
+      // Determine which image to use for this player
+      // Use NFT image if this is the local player and we have one loaded
+      const useNFT = isMe && this.playerNFTLoaded && this.playerNFTImage;
+      const pizzaImage = useNFT ? this.playerNFTImage : this.defaultPizzaImage;
+      const pizzaLoaded = useNFT ? this.playerNFTLoaded : this.defaultPizzaLoaded;
+
       // Draw pizza image clipped to circle
-      if (this.defaultPizzaLoaded && this.defaultPizzaImage) {
+      if (pizzaLoaded && pizzaImage) {
         this.ctx.save();
 
         // Create circular clipping path
@@ -180,7 +211,7 @@ export class Renderer {
         // Draw the pizza image centered and scaled to cover the circle
         const imgSize = radius * 2;
         this.ctx.drawImage(
-          this.defaultPizzaImage,
+          pizzaImage,
           screen.x - radius,
           screen.y - radius,
           imgSize,
@@ -189,10 +220,10 @@ export class Renderer {
 
         this.ctx.restore();
 
-        // Draw crust outline
+        // Draw crust outline (golden for NFT, brown for default)
         this.ctx.beginPath();
         this.ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
-        this.ctx.strokeStyle = '#8B4513';
+        this.ctx.strokeStyle = useNFT ? '#FFC107' : '#8B4513';
         this.ctx.lineWidth = Math.max(3, radius * 0.08);
         this.ctx.stroke();
       } else {
